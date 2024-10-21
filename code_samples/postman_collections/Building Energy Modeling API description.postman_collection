@@ -1,0 +1,1894 @@
+{
+	"info": {
+		"_postman_id": "a694e1db-4bd0-49e9-9d98-f0f34c729c81",
+		"name": "Building Energy Modeling API description",
+		"description": "# Overview\n## API overview and usage\nThis document explains the usage of the `Building Energy Modeling` API.\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/bem_overview.jpg\" style=\"zoom:67%;\" />\n\nThis API has three main purposes:                       \n1. Build a baseline model of a building using the “thermal signature” models recommended by the American Society of Heating, Refrigerating and Air‑Conditioning (ASHRAE) and the International Performance Measurement and Verification Protocol (IPMVP), typically from one year of historical data. Optionally assess its statistical quality to compute savings.   \n2. Optionally build a target model using the same mechanism, typically from one year of simulated target data (assuming the user has created simulated target data).        \n3. Follow-up the baseline and target models of a building in particular to detect faults and to compute savings.            \n\nThis document provides a general tutorial for users who want to consume the Building Energy Modeling API. \n\n### Sandbox\nSandbox is available to try sample calls for this API! Why not give it a go and see the API working in action. Please refer the API Try it section for details. (Note: only 5 calls per minute are allowed in sandbox)\n\n## How it works\nThe Building Energy Modeling API usage flow is described below.     \n\nFirst you need to create a model through the create service. This service will return a modelId and other model information. \n\nOnce the model is created it is possible to either make a consumption prediction using the apply service or determine if your model is good enough for savings computation through the assess quality for savings service. \n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/bem_flow.jpg\" style=\"zoom:67%;\" />\n\n### Create model\n\nThis service receives as input a multivariate time-series. Each column of this table represents a variable (feature or the target) and each row represents an observation. At least one of these columns must describe the target you want to model. \n\nCreate service also receives only one configuration object composed of one or several section(s) depending on request customization. \n\n#### Columns configuration\n\nThis configuration object is the only mandatory one. It marks which columns to use in the input table: \n* target (Mandatory): What you want to model (most of the time, it is energy consumption related). \n* meanTemperature, minTemperature, maxTemperature (Mandatory): outside air temperature needed to model building signature.      \n\n##### Note: \nYou need either meanTemperature or (minTemperature + maxTemperature) or both. With all temperature data, BEM will automatically choose the best degree days formula available.\n* otherFeatures (Optional): Input table features that have an influence on your target. For example : production counts, occupancy, exterior heating input to the building. \n* positiveFeatures (Optional): Features among otherFeatures that are known as positive influence on your target, meaning its increase is correlated to target increase. For example : production numbers, occupancy.        \n\n##### Note: \nTo sum up, for a daily energy model you will typically need: \n* An “energy consumption” column (the target) \n* An outside air temperature columns(mean and / or minmax) \n* Maybe an optional other columns that are known to influence energy consumption. \n\n#### DayGroups configuration\n\nAn optional configuration object dedicated to your building working calendar:\n\n* __dayGroupCol__ : may be present to activate explicit time binning. Indeed it is very frequent that a building has several models, one for each working mode, the most common one being : opened and closed days. This column is the only one not requiring numerical data. If this column is provided, a sub-model will be created for each unique element.\n* __improveCalendar__ : chooses whether you want BEM to find a better calendar repartition of the week. This extends computation time.\n\n##### Note: \nimproveCalendar is usable with or without a dayGroupCol parameter :\n\nIf dayGroupCol is provided, improveCalendar will run on combination of already existing groups.\n\nIf no dayGroupCol is provided, improveCalendar will run on all possible day of week combinations.\n\n* maxMergedDayGroups : linked to improveCalendar parameter, BEM will explore days of week configurations up to a maximum number of groups. For example: 3 means every slicing of 3 groups or lower. It is not recommended to go higher than 3 since the building rarely has more than 3 different working modes per week.\n\n#### Temporal configuration\n\nAn optional configuration object dedicated to customize the temporal resolution of your train data:\n\n* resolution : selects whether you want your building signatures and results to be in daily or monthly resolution. It also indicates to BEM your target format. \n    * daily means that your input table contains data on a daily basis (target and others columns).\n    * monthly means that your input table contains target data once a month, on each first day, representing the monthly consumption.\n\n##### Note\n\n* On Monthly mode : Any other column (Temperature, Feature) still have to be daily input.\n\n* There are some parameters incompatable with the Monthly mode, do not use them: improveCalendar, robustRegression, degreeDaysMode.\n\n* Default mode is daily.\n\n##### Warning!\n\n* For daily mode, the train table has to contain at least 80 exploitable days of observations (80 non-NaN rows)\n\n* For monthly mode, the train table has to contain at least 8 monthly target observations (8 x ~30 rows for other columns)\n\n#### Computation configuration\n\nAn optional configuration object dedicated to customize computation options. This is an advanced user configuration object:\n\n* degreeDaysMode : Select the degree days computing methods that will be parsed by BEM : Basic or Advanced. See degree days formulas\n\n##### Warning!\n\nOnly use on TemporalConfig['resolution'] == “daily”\n\n* buildingSignatures : Select the types of building signature that will be parsed by BEM. See thermal signatures\n\n##### Note: \nReducing the scope of building signature to explore is recommended when you have information on your building heatingcooling technologies : + No cooling devices -> use [twoParameters”,”threeParametersHeating”] + No heating devices -> use [twoParameters”,”threeParametersCooling”]\n\n#### RobustRegression \n\nSelect whether the regression is sensible to outliers or not. This is useful if you have already cleaned your data from outliers :\n    * False value will use a LinearRegression.\n    * True value will use a RANSACRegressor.\n\n##### Note:\nrobustRegression means a model robust to outliers but at the price of longer computation time. No robustRegression means faster response time, but user has to be sure to input representative data.\n\n##### Warning!\n\nOnly use on TemporalConfig['resolution'] == “daily”\n\n#### AutoApply\n\nSelects whether BEM executes an apply of the computed model directly on its training table. This is useful when you just want a full ID card of this year :\nModel, Model information and metrics :\n   * BEMModel\n   * RegressionMetrics\n   * Prediction table on training set. See apply output table for details.\n\n\n### Apply model\n    \nThe test table provided to the apply service has to fit the exact same criteria as those required for the create service input table\n    \n##### Note: \nThis table can be the exact same table than the one provided in the create service.\n    \n#### Apply parameters\n\n+ faultDetection: decide which type of fault detection you want BEM to apply to your test dataset:\n   - “both” or True (default): \n      * Considered both over and under consumptions as fault. \n      * “overconsumption” : Considered only over consumption as fault. \n      * “underconsumption” : Considered only under consumption as fault. \n   - False : Do not consider any fault detection.\n    \n##### Note: \nIn the no fault detection case, the target becomes optional in the test dataset - faultDetectionThresholdNbStd and removeFaultsFromSavings parameters become useless.\n\n+ faultDetectionThresholdNbStd: determines the standard deviation coefficient up to which a TARGET value is considered normal. The default values is 2 sigma. see fault_detection_limits. \n\n+ removeFaultsFromSavings: determines whether savings are kept in accumulation computation or not for anomaly points in test dataset.\n\nThe output of the apply service is a prediction table which is basically the same as the one provided as input with some added columns and exact same rows.\n    \nHere is a list of added columns:\n    \n* discarded_for_model_creation\n* prediction\n* prediction_residual\n* cumulative_prediction_residual, cumulative_savings and cumulative_savings_<day_group>\n* fault_detection_upper_limit and fault_detection_lower_limit\n* consumption_anomaly\n* midrange_temperature\n* reference_temperature\n* heating_degree_days and cooling_degree_days\n* predicted_DRIVER_contribution\n* estimated_actual_DRIVER_contribution\n* NTS_DRIVER_predicted_energy and NTS_DRIVER_actual_energy\n    \n##### Note: \nFor following descriptions other columns than those added are referred:\n* TARGET: Target provided by the user\n* DRIVER: Driver provided by the user\n* DAYGROUP: Day group either provided by the user or computed by the component\n    \n#### discarded_for_model_creation\n\nThis column is an autoApply context only. It represents which points were ultimately used for thermal signatures models creation.\n    \n##### Warning!\n    \n* Points marked True in this columns are not outliers, in the “aberrant value” sense, See consumption_anomaly columns.\n* Results in this column will vary a lot depending of the robustRegression parameter value.\n    \n#### prediction\n\nPrediction of the provided TARGET made by the BuildingEnergyModeling component.\n    \nFor each day group we have:\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/Prediction_1.jpg\" style=\"zoom:67%;\" />\n\nwhere\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/Prediction_2.jpg\" style=\"zoom:67%;\" />\n\n#### prediction_residual\n\nThe prediction residual is the prediction error.\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/Prediction_3.jpg\" style=\"zoom:67%;\" />\n\n#### cumulative_prediction_residual, cumulative_savings and cumulative_savings_<day_group>\n\nThis represents the sum of differences between ground truth and prediction on the TARGET, expressed in the same physical unit. It is called cumulative_savings in an apply context, cumulative_savings_DAYGROUP represent the cumulative savings made for a specific day group. The cumulative_prediction_residual is used in an autoApply context, as the word “savings” does not make much sense here.\n\nThe computation formula stays the same in either case:\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/CumulativeSavings.jpg\" style=\"zoom:67%;\" />\n\nwhere:\n\n__k__ is the number of rows in the provided table.\n\n##### Note:\ncumulative_prediction_residual can be useful if it displays a cyclic pattern in values, this most probably means that there is at least another hidden feature influencing the target value !\n\n#### fault_detection_upper_limit and fault_detection_lower_limit\n\nRespectively values upper and bellow which a TARGET observation is considered as an anomaly. These values directly depends on the faultDetectionThresholdNbStd value on apply context, and is fixed at default value 2.0 in an autoApply context.\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/fault_detection.jpg\" style=\"zoom:67%;\" />\n\n#### consumption_anomaly\n\nBoolean flag informing if a TARGET observation is or not considered as an anomaly.\n\n##### Warning!\n* This column is present in autoApply model creation context.\n* In apply context, this column is piloted by the faultDetection parameter.\n\n#### midrange_temperature\n\nThe day midrange temperature represent an approximation of the day average temperature with following formula:\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/midrange_temp.jpg\" style=\"zoom:67%;\" />\n\n##### Warning!\n\nThis metric is only computed when both minTemperature and maxTemperature are provided.\n\n#### reference_temperature\n\nSince every day group model may use a different temperature value (average or midrange temperature), this column gathered in a single one the reference temperature value used by each day groups.\n\n#### heating_degree_days__ and __cooling_degree_days\n    \nRespectively values of computed heating and cooling degree days. For more information see Degree days.\n\n#### predicted_DRIVER_contribution\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/Predicted_Driver.jpg\" style=\"zoom:67%;\" />\n\nThe special predicted_other_uses_of_energy_contribution is equal to the intercept. If the model is 2-parameters, predicted_heating_degree_days_contribution or predicted_cooling_degree_days_contribution will be filled depending on the slope. Note that we choose to NOT provide a predicted_reference_temperature_contrib because the result would be harder to understand.\n\n##### Note:\nOn every row, the sum of all such predicted contributions should be equal to the prediction column\n\n#### estimated_actual_DRIVER_contribution\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/EstimatedActualDriver.jpg\" style=\"zoom:67%;\" />\n \nThat is, we prorate the actual energy with the proportions of contribution of this driver in the model.\n\n##### Note:\nOn every row, the sum of all such estimated actual contributions should be equal to the provided TARGET column\n\n#### NTS_DRIVER_predicted_energy and NTS_DRIVER_actual_energy\n\nNormalized Thermal Signature (NTS) columns. By default the building thermal signature is just obtained by plotting the scatter plot of prediction (line) and TARGET (dots) (y axis) against the reference_temperature (x axis). However in case of additional drivers the resulting scatter plot is flawed by the influence of these extra drivers. To circumvent this one can plot a so-called “normalized” version of the thermal signature, obtained for each driver by plotting NTS_DRIVER_predicted_energy (line) and NTS_DRIVER_actual_energy (dots) (y axis) against the DRIVER (x axis). Equations are:\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/NTS_Driver.jpg\" style=\"zoom:67%;\" />\n\nLast but not the least (as they will be the most used), a special NTS_reference_temperature_predicted_energy is computed by merging the predicted energies of cdd and hdd drivers:\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/NTS_RefTemp.jpg\" style=\"zoom:67%;\" />\n\n### Assess model quality for savings\n\nThis service answers the question “is my model good enough to compute statistically significant savings?”. Its main parameters are the target savings ratio (20%, 30%), and the assessment period (30 days, 60 days, 365 days). The larger the target savings, and the longer the assessment period, the less precise a model needs to be. On the other hand if the savings ratio to achieve is small (e.g. 1%, 5%) and/or if the assessment period is short (e.g. 10 days, 30 days) the uncertainty will be bigger and certifying the savings will require a much more precise model.\n\n# Documentation\n## Getting started \nThese are the minimal steps to use this component through its APIs. \n\n### Authentication\n\nAuthentication is mandatory to use this API product. API_KEY must be included in the Authorization header of each request. To see how you can obtain your API KEY please refer How to signup section. Sample requests included as examples below. \n\n### Create model\n\nFirst step is to create a trained model with:\n* configuration parameters, e.g.:    \n```json\n{\n    \"configuration\": {\n\"columns\":{\n\"target\": \"energy_consumption\",\n\"meanTemperature\": [\"mean_temperature\"] }\n    }\n}\n```\n\n##### Note\n\n* These are the minimal configuration parameters that can be used to train a model.\n* For advanced usage, see the complete /create API description.\n* training data, e.g.:        \n```json\n{\n    \"trainTbl\": {\n    \"format\": \"row_objects_indexed\", \n    \"indexName\": \"timestamp\", \n    \"rows\": { \n    \"2016-05-20\": {\n    \"energy_consumption\": 479.157,\n    \"mean_temperature\": 19.1 },\n    \"2016-05-21\": {\n    \"energy_consumption\": 478.475,\n    \"mean_temperature\": 16.8 } } }\n}\n```       \n    \n### Apply model\n    \nSecond step is to apply the created model to other data to make a prediction, with:\n* the previously returned modelId \n* some data to apply the model on, e.g.: \n```json\n{\n    \"testTbl\": {\n    \"format\": \"row_objects_indexed\", \n    \"indexName\": \"timestamp\", \n    \"rows\": {\n\"2016-05-20\": {\n    \"energy_consumption\": 400.0,\n    \"mean_temperature\": 42.0 },\n\"2016-05-21\": {\n    \"energy_consumption\": 500.0,\n    \"mean_temperature\": 69.0 } } }\n}\n```\n\nFor advanced usage, see the complete /apply API description.          \n\n## How to sign up \n\nBefore you can sign up for the `Building Energy Modeling` API, you must <a href=\"https://exchange.se.com/api/navigation-service/idp/login?state=https%3A%2F%2Fexchange.se.com%2F\" target=\"_blank\">register or login with an Exchange account</a>. \n\nThen you can subscribe to the <a href=\"https://exchange.se.com/shop\" target=\"_blank\">API product in our Shop</a> and where you can read about terms & conditions. \n\nAfter subscription, you will find your API key prepopulated in the Try Out console.\n\nNote: If you're an existing V1 consumer then you do not need to subscribe again. Your existing API key will work for calling both V1 and V2 APIs.\n\nSelect one of the endpoints and click on      <img src=\"https://raw.githubusercontent.com/SE-Analytics-Team/public-images/master/common%20images/TryIt.png\" style=\"zoom:67%;\" />.\n\nSelect Production as the target environment \n\n<img src=\"https://raw.githubusercontent.com/SE-Analytics-Team/public-images/master/common%20images/prod_url.png\" style=\"zoom:67%;\"/>. \n\nYour API key is shown in the Try Out console \n\n<img src=\"https://raw.githubusercontent.com/SE-Analytics-Team/public-images/master/common%20images/your%20key.png\" style=\"zoom:67%;\" />\n\nStatus of your API consumption will soon be available from the <a href=\"https://exchange.se.com/\" target=\"blank\">Exchange cockpit</a>\n\n## Table formats\n* Below described are all possible input table formats.\n* By default table returned after an apply will have the same format as the one provided in the input.\n\n__TableRowFormat__\n\n```json\n{\n    \"format\": \"rows\",\n    \"indexName\": \"Date\",\n    \"columnNames\": [\"Date\", \"Energy_EMS_DELTAS_kWh\", \"T_mean\", \"T_min\", \"T_max\", \"Shipment_RMB\", \"DVC_hours\", \"week_day\", \"daytype_basic\"],\n    \"rows\": [\n[\"2011-01-01\", 2226.5569999999834, 0.4, -3.0, 3.0, 0.0, 77433.66666666667, 5, \"SaturdaysMondays\"],\n[\"2011-01-02\", 3593.3263999999967, 2.8, 0.0, 6.0, 0.0, 77433.66666666667, 6, \"Sundays\"],\n[\"2011-01-03\", 4172.260399999936, 1.3, -2.0, 4.0, 0.0, 77433.66666666667, 0, \"SaturdaysMondays\"],\n[\"2011-01-04\", 4364.47360000005, 2.3, -1.0, 5.0, 8226221.91, 77433.66666666667, 1, \"NormalDays\"],\n[\"2011-01-05\", 4347.980599999986, 2.6, 0.0, 4.0, 3105077.285, 77433.66666666667, 2, \"NormalDays\"],\n[\"2011-01-06\", 4313.757400000002, 0.8, -1.0, 3.0, 3550134.215, 77433.66666666667, 3, \"NormalDays\"],\n[\"2011-01-07\", 4244.50959999999, 1.1, -3.0, 4.0, 6014563.55, 77433.66666666667, 4, \"NormalDays\"],\n[\"2011-01-08\", 3864.668000000063, 3.6, 0.0, 8.0, 0.0, 77433.66666666667, 5, \"SaturdaysMondays\"],\n[\"2011-01-09\", 2344.0981999999844, 0.9, -3.0, 6.0, 0.0, 77433.66666666667, 6, \"Sundays\"],\n[\"2011-01-10\", 3728.927799999993, 0.2, -2.0, 3.0, 2506211.045, 77433.66666666667, 0, \"SaturdaysMondays\"] ]\n}\n```\n \n__TableRowIndexObjectFormat__\n\n```json\n{\n    \"format\": \"row_objects_indexed\",\n    \"indexType\": null,\n    \"indexName\": \"Date\",\n    \"rows\": {\n\"2011-01-01\": {\"Energy_EMS_DELTAS_kWh\": 2226.55, \"T_mean\": 0.4, \"T_min\": -3.0, \"T_max\": 3.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"SaturdaysMondays\"},\n\"2011-01-02\": {\"Energy_EMS_DELTAS_kWh\": 3593.32, \"T_mean\": 2.8, \"T_min\": 0.0, \"T_max\": 6.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"Sundays\"},\n\"2011-01-03\": {\"Energy_EMS_DELTAS_kWh\": 4172.26, \"T_mean\": 1.3, \"T_min\": -2.0, \"T_max\": 4.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"SaturdaysMondays\"},\n\"2011-01-04\": {\"Energy_EMS_DELTAS_kWh\": 4364.47, \"T_mean\": 2.3, \"T_min\": -1.0, \"T_max\": 5.0, \"Shipment_RMB\": 8226221.91, \"daytype_basic\": \"NormalDays\"},\n\"2011-01-05\": {\"Energy_EMS_DELTAS_kWh\": 4347.98, \"T_mean\": 2.6, \"T_min\": 0.0, \"T_max\": 4.0, \"Shipment_RMB\": 3105077.285, \"daytype_basic\": \"NormalDays\"},\n\"2011-01-06\": {\"Energy_EMS_DELTAS_kWh\": 4313.75, \"T_mean\": 0.8, \"T_min\": -1.0, \"T_max\": 3.0, \"Shipment_RMB\": 3550134.215, \"daytype_basic\": \"NormalDays\"},\n\"2011-01-07\": {\"Energy_EMS_DELTAS_kWh\": 4244.50, \"T_mean\": 1.1, \"T_min\": -3.0, \"T_max\": 4.0, \"Shipment_RMB\": 6014563.55, \"daytype_basic\": \"NormalDays\"},\n\"2011-01-08\": {\"Energy_EMS_DELTAS_kWh\": 3864.66, \"T_mean\": 3.6, \"T_min\": 0.0, \"T_max\": 8.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"SaturdaysMondays\"},\n\"2011-01-09\": {\"Energy_EMS_DELTAS_kWh\": 2344.09, \"T_mean\": 0.9, \"T_min\": -3.0, \"T_max\": 6.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"Sundays\"},\n\"2011-01-10\": {\"Energy_EMS_DELTAS_kWh\": 3728.92, \"T_mean\": 0.2, \"T_min\": -2.0, \"T_max\": 3.0, \"Shipment_RMB\": 2506211.045, \"daytype_basic\": \"SaturdaysMondays\"} }\n}\n```\n\n__TableColumnFormat__\n\n```json\n{\n    \"format\": \"columns\",\n    \"index\": [\"2011-01-01\",\"2011-01-02\",\"2011-01-03\",\"2011-01-04\",\"2011-01-05\",\"2011-01-06\",\"2011-01-07\",\"2011-01-08\",\"2011-01-09\",\"2011-01-10\"],\n    \"indexName\": \"Date\",\n    \"columns\": {\n    \"Energy_EMS_DELTAS_kWh\": [2226.55,3593.32,4172.26,4364.47,4347.98,4313.75,4244.50,3864.66,2344.09,3728.92],\n    \"T_mean\": [0.4,2.8,1.3,2.3,2.6,0.8,1.1,3.6,0.9,0.2],\n    \"T_min\": [-3.0,0.0,-2.0,-1.0,0.0,-1.0,-3.0,0.0,-3.0,-2.0],\n    \"T_max\": [3.0,6.0,4.0,5.0,4.0,3.0,4.0,8.0,6.0,3.0],\n    \"Shipment_RMB\": [0.0,0.0,0.0,8226221.91,3105077.285,3550134.215,6014563.55,0.0,0.0,2506211.045],\n    \"daytype_basic\": [\"SaturdaysMondays\",\"Sundays\",\"SaturdaysMondays\",\"NormalDays\",\"NormalDays\",\"NormalDays\",\"NormalDays\",\"SaturdaysMondays\",\"Sundays\",\"SaturdaysMondays\"] }\n}\n```\n\n__TableColumnObjectFormat__\n\n```json\n{\n    \"format\": \"column_objects\",\n    \"indexType\": null,\n    \"indexName\": \"Date\",\n    \"columns\": {\n\"Energy_EMS_DELTAS_kWh\": {\n    \"2011-01-01\": 2226.5569999999834,\n    \"2011-01-02\": 3593.3263999999967,\n    \"2011-01-03\": 4172.260399999936,\n    \"2011-01-04\": 4364.47360000005,\n    \"2011-01-05\": 4347.980599999986,\n    \"2011-01-06\": 4313.757400000002,\n    \"2011-01-07\": 4244.50959999999,\n    \"2011-01-08\": 3864.668000000063,\n    \"2011-01-09\": 2344.0981999999844,\n    \"2011-01-10\": 3728.927799999993},\n\"T_mean\": {\n    \"2011-01-01\": 0.4,\n    \"2011-01-02\": 2.8,\n    \"2011-01-03\": 1.3,\n    \"2011-01-04\": 2.3,\n    \"2011-01-05\": 2.6,\n    \"2011-01-06\": 0.8,\n    \"2011-01-07\": 1.1,\n    \"2011-01-08\": 3.6,\n    \"2011-01-09\": 0.9,\n    \"2011-01-10\": 0.2 },\n\"T_min\": {\n    \"2011-01-01\": -3.0,\n    \"2011-01-02\": 0.0,\n    \"2011-01-03\": -2.0,\n    \"2011-01-04\": -1.0,\n    \"2011-01-05\": 0.0,\n    \"2011-01-06\": -1.0,\n    \"2011-01-07\": -3.0,\n    \"2011-01-08\": 0.0,\n    \"2011-01-09\": -3.0,\n    \"2011-01-10\": -2.0 },\n\"T_max\": {\n    \"2011-01-01\": 3.0,\n    \"2011-01-02\": 6.0,\n    \"2011-01-03\": 4.0,\n    \"2011-01-04\": 5.0,\n    \"2011-01-05\": 4.0,\n    \"2011-01-06\": 3.0,\n    \"2011-01-07\": 4.0,\n    \"2011-01-08\": 8.0,\n    \"2011-01-09\": 6.0,\n    \"2011-01-10\": 3.0 },\n\"Shipment_RMB\": {\n    \"2011-01-01\": 0.0,\n    \"2011-01-02\": 0.0,\n    \"2011-01-03\": 0.0,\n    \"2011-01-04\": 8226221.91,\n    \"2011-01-05\": 3105077.285,\n    \"2011-01-06\": 3550134.215,\n    \"2011-01-07\": 6014563.55,\n    \"2011-01-08\": 0.0,\n    \"2011-01-09\": 0.0,\n    \"2011-01-10\": 2506211.045 },\n\"daytype_basic\": {\n    \"2011-01-01\": \"SaturdaysMondays\",\n    \"2011-01-02\": \"Sundays\",\n    \"2011-01-03\": \"SaturdaysMondays\",\n    \"2011-01-04\": \"NormalDays\",\n    \"2011-01-05\": \"NormalDays\",\n    \"2011-01-06\": \"NormalDays\",\n    \"2011-01-07\": \"NormalDays\",\n    \"2011-01-08\": \"SaturdaysMondays\",\n    \"2011-01-09\": \"Sundays\",\n    \"2011-01-10\": \"SaturdaysMondays\"} }\n}\n```\n\n__TableRowObjectFormat__\n\n```json\n{\n    \"format\": \"row_objects\",\n    \"indexName\": \"Date\",\n    \"rows\": [\n{\"Date\": \"2011-01-01\", \"Energy_EMS_DELTAS_kWh\": 2226.5569999999834, \"T_mean\": 0.4, \"T_min\": -3.0, \"T_max\": 3.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"SaturdaysMondays\"},\n{\"Date\": \"2011-01-02\", \"Energy_EMS_DELTAS_kWh\": 3593.3263999999967, \"T_mean\": 2.8, \"T_min\": 0.0, \"T_max\": 6.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"Sundays\"},\n{\"Date\": \"2011-01-03\", \"Energy_EMS_DELTAS_kWh\": 4172.260399999936, \"T_mean\": 1.3, \"T_min\": -2.0, \"T_max\": 4.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"SaturdaysMondays\"},\n{\"Date\": \"2011-01-04\", \"Energy_EMS_DELTAS_kWh\": 4364.47360000005, \"T_mean\": 2.3, \"T_min\": -1.0, \"T_max\": 5.0, \"Shipment_RMB\": 8226221.91, \"daytype_basic\": \"NormalDays\"},\n{\"Date\": \"2011-01-05\", \"Energy_EMS_DELTAS_kWh\": 4347.980599999986, \"T_mean\": 2.6, \"T_min\": 0.0, \"T_max\": 4.0, \"Shipment_RMB\": 3105077.285, \"daytype_basic\": \"NormalDays\"},\n{\"Date\": \"2011-01-06\", \"Energy_EMS_DELTAS_kWh\": 4313.757400000002, \"T_mean\": 0.8, \"T_min\": -1.0, \"T_max\": 3.0, \"Shipment_RMB\": 3550134.215, \"daytype_basic\": \"NormalDays\"},\n{\"Date\": \"2011-01-07\", \"Energy_EMS_DELTAS_kWh\": 4244.50959999999, \"T_mean\": 1.1, \"T_min\": -3.0, \"T_max\": 4.0, \"Shipment_RMB\": 6014563.55, \"daytype_basic\": \"NormalDays\"},\n{\"Date\": \"2011-01-08\", \"Energy_EMS_DELTAS_kWh\": 3864.668000000063, \"T_mean\": 3.6, \"T_min\": 0.0, \"T_max\": 8.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"SaturdaysMondays\"},\n{\"Date\": \"2011-01-09\", \"Energy_EMS_DELTAS_kWh\": 2344.0981999999844, \"T_mean\": 0.9, \"T_min\": -3.0, \"T_max\": 6.0, \"Shipment_RMB\": 0.0, \"daytype_basic\": \"Sundays\"},\n{\"Date\": \"2011-01-10\", \"Energy_EMS_DELTAS_kWh\": 3728.927799999993, \"T_mean\": 0.2, \"T_min\": -2.0, \"T_max\": 3.0, \"Shipment_RMB\": 2506211.045, \"daytype_basic\": \"SaturdaysMondays\"} ]\n}\n```\n\n## Thermal signature\n\n### What is a Thermal signature?\n\nThe thermal signature of a building describes the energy consumption of a building considering external temperature. Basically it models how much energy a building will require for heating when external temperature is cold (heating degree days, HDD) and how much energy it will require for cooling when external temperature is hot (cooling degree days, CDD).\n\nThe heating change-point is the outside air temperature below which the heating system is on.\n\nThe cooling change-point is the outside air temperature above which cooling system is on.\n\nSee Degree days section for more information.\n\nThere are 5 types of change-point models according to ASHRAE guideline 14, appendix D4:\n* 2-parameters\n* 3-parameters-heating\n* 3-parameters-cooling\n* 4-parameters\n* 5-parameters    \n\n##### Note: \nAll these model types are able to take into account additional drivers (production, occupancy…). These drivers will be considered to have a linear impact on energy, independently on the weather’s impact.\n\n#### 2-parameters\n\nThe 2-parameters model is a straight line with no change-points. It can model either a heating season only, a cooling season only or a building without heating or cooling.\n\n#### 3-parameters-heating\n\nThe slope heating 3-parameters model includes a linear dependency with HDD: when outside air temperature is below a change-point value, energy linearly depends on it ; above it is a constant. See the example below. 3-parameters heating models are used to model energy consumption in buildings without cooling system, or to model the energy consumption of heating equipments alone (using a sub-meter).\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/threeparameters_heating.jpg\" style=\"zoom:67%;\" />\n\n#### 3-parameters-cooling\n\nThe slope cooling 3-parameters model includes a linear dependency with CDD: when outside air temperature is above a change-point value, energy linearly depends on it ; below it is a constant. See the example below. 3-parameters cooling models are used to model energy consumption in buildings without heating system, or to model the energy consumption of cooling equipments alone (using a sub-meter).\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/threeparameters_cooling.jpg\" style=\"zoom:67%;\" />\n\n#### 4-parameters\n\nThe 4-parameters model includes one linear dependency for heating (HDD) and another for cooling (CDD), with a single shared change-point between the two. 4-parameter models are appropriate to model heating and cooling energy consumption in buildings where there is no inter-seasonal behavior: there are almost no days in the year where the heating and cooling systems are both off. Note that these models can correctly take into account days where both heating and cooling are on, if an appropriate degree days calculation methods is used (by default this component searches for the best method).\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/fourparameters.jpg\" style=\"zoom:67%;\" />\n\n#### 5-parameters\n\nThe 5-parameters model includes one linear dependency for heating (HDD) and another for cooling (CDD), with one dedicated change-point for each mode. Unlike the 4-parameter model, the 5-parameter model is able to model heating and cooling energy consumption in buildings where there is an inter-seasonal behavior with both systems turned off. Note that these models can correctly take into account days where both heating and cooling are on, if an appropriate degree days calculation methods is used (by default this component searches for the best method).\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/fiveparameters.jpg\" style=\"zoom:67%;\" />\n\n## Degree days\n\n### What are degree days?\n\nDegree days are a specialist kind of weather data providing a simplified representation of outside-air-temperature data. They are calculated from readings of outside air temperature and mainly used in calculations relating to building energy consumption.\n\nIt is possible to distinguish two kinds of degree days:\n* “Heating degree days”, or “HDD”, are a measure of how much (in degrees), and for how long (in days), outside air temperature was lower than a specific “base temperature” (or “heating change-point”). They are used for calculations relating to the energy consumption required to heat buildings.\n* “Cooling degree days”, or “CDD”, are a measure of how much (in degrees), and for how long (in days), outside air temperature was higher than a specific “base temperature” (or “cooling change-point”). They are used for calculations relating to the energy consumption required to cool buildings.\n\n##### Note\n* It is possible for a building to only have HDD or CDD\n* It is possible for heating change-points and cooling change-points to be equal\n* The thermal signature of a building will depend on the presence/absence of HDD and CDD as well as the number of different change-points\n\n##### Example\n\nConsidering a building with a base temperature of 17°C and a single day, let’s say July 1st, with an average outside air temperature at 16°C. So, on July 1st, the mean outside air temperature (16°C) was 1 degree below the base temperature of the building (17°C), and we can work out the heating degree days on that day like so:\n\n__degree_days = ( 17 - 16 ) * 1 = 1 degree days__\n\n#### Base temperature\n\nAs seen above, the calculation of degree days requires to define a base temperature for both HDD and CDD. If you are not sure which temperatures to use for your building, keep reading.\n\nBase temperature (Tbase) can be physically interpreted as the outdoor temperature at which solar and internal gains offset heat losses (Eto, 1988 <a class=\"footnote-reference brackets\" href=\"#f5\" id=\"id2\">[5]</a>).\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/BaseTemp1.jpg\" style=\"zoom:67%;\" />    \n\nAs can be seen, the base temperature is not easy to calculate. It is different for each building and climatic zone. Anyway, the following table gives different standard values for different countries (Spinoni, Vogt, & Barbosa, 2015)\n\n| Country               | Base Heating Degree Days|Base Cooling Degree Days| Source\n| ----------------           | ------------|  ------------|  ------------| \n| Turkey               |   14-22°C |   28°C    |   Buyukalaca et al. (2001) <a class=\"footnote-reference brackets\" href=\"#f1\" id=\"id4\">[1]</a>\n| Spain   |   15°C    |   21°C    |   Valor et al. (2001) <a class=\"footnote-reference brackets\" href=\"#f13\" id=\"id5\">[13]</a>\n|  Greece  |   10-20°C |   27.5°C  |   Papakostas et al. (2010) <a class=\"footnote-reference brackets\" href=\"#f9\" id=\"id6\">[9]</a>\n|  Canada  |   18°C    |   18°C    |   Wibig (2003) <a class=\"footnote-reference brackets\" href=\"#f14\" id=\"id7\">[14]</a>\n|  United States   |   18.3°C  |   18.3°C   |   Wibig (2003) <a class=\"footnote-reference brackets\" href=\"#f14\" id=\"id8\">[14]</a>\n|  United Kingdom  |   15.5°C  |   22°C    |   UK Met-Office <a class=\"footnote-reference brackets\" href=\"#f12\" id=\"id9\">[12]</a>\n|  France  |   18°C    |   18°C    |   COSTIC <a class=\"footnote-reference brackets\" href=\"#f3\" id=\"id10\">[3]</a>\n\nDespite these general references, every Energy Manager can use their own base temperatures (per building, per project, etc) according to specific project needs or previous experience.\n\n#### Implemented degree days formulas\n\nDepending on provided information, the BuildingEnergyModeling component will calculate degree days using different methods:\n* <a class=\"reference internal\" href=\"#basic\" id=\"id22\">Basic</a>\n* <a class=\"reference internal\" href=\"#uk-met-office\" id=\"id23\">UK Met-Office</a>\n* <a class=\"reference internal\" href=\"#costic\" id=\"id24\">COSTIC</a>\n\n##### Note: \nFor all the following degree days formulas we have:\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/BaseTemp2.jpg\" style=\"zoom:67%;\" />\n\n<div class=\"section\" id=\"basic\"><h3><a class=\"toc-backref\" href=\"#id22\">Basic</a><a class=\"headerlink\" href=\"#basic\" title=\"Permalink to this headline\"></a></h3></div>\n\n#### For Heating Degree Days (HDD)\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/HDD_1.jpg\" style=\"zoom:67%;\" />\n\n#### For Cooling Degree Days (CDD)\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/CDD_1.jpg\" style=\"zoom:67%;\" />\n\n<div class=\"section\" id=\"uk-met-office\"><h3><a class=\"toc-backref\" href=\"#id23\">UK Met-Office</a><a class=\"headerlink\" href=\"#uk-met-office\" title=\"Permalink to this headline\"></a></h3></div>\n\nThis method was developed by the UK Met-Office in 1928 (CIBSE, 2006)<a class=\"footnote-reference brackets\" href=\"#f2\" id=\"id13\">[2]</a>, daily Heating Degree Days (HDD) and Cooling Degree Days (CDD) are calculated based on a comparison of daily minimum and maximum air temperatures with the selected base temperature, taking account of fluctuations of daily air temperature around the base temperature, as well as the asymmetry between daily average temperature and diurnal temperature variations. The UK Met-Office equations for computing daily HDD and CDD are shown below (Matzarakis & Balafoutis, 2004)<a class=\"footnote-reference brackets\" href=\"#f7\" id=\"id14\">[7]</a> (Spinoni et al., 2018)<a class=\"footnote-reference brackets\" href=\"#f11\" id=\"id15\">[11]</a>:\n\nFor Heating Degree Days (HDD)\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/HDD_2.jpg\" style=\"zoom:67%;\" />\n\nFor Cooling Degree Days (CDD)\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/CDD_2.jpg\" style=\"zoom:67%;\" />\n\n<div class=\"section\" id=\"costic\"><h3><a class=\"toc-backref\" href=\"#id24\">COSTIC</a><a class=\"headerlink\" href=\"#costic\" title=\"Permalink to this headline\"></a></h3></div>\n\nThis method is the standard of the Scientific and Technical Committee of the Climatic Industries of France, also called the Method of Energy Professionals. The Unified Day Degree (Degré jour unifié - DJU) is the difference between the outside temperature and a reference temperature which allows estimates of thermal energy consumption to keep a building comfortable in proportion to the harshness of winter or the heat of the summer. The usual reference of 18°C was defined by considering that the interior temperature of the premises is 19°C and that the free internal (occupants, lighting, equipment, etc.) and external (solar radiation, etc.) supplies cover the equivalent of 1°C of heat loss. They are therefore divided into heating degree-days (DJC) and cooling degree-days (DJF).\n\nThere are two methods of calculating DJU giving different results: a method called “météo” (Météo-France, 2017) 8 with simple calculation and a method called “Professionnels de l’énergie” or “COSTIC method” with more elaborate calculation (COSTIC, 2020)[#f3]_. The COSTIC calculation method is the recommended one by the French government (GEM/CC), 2007 6 and it’s the following:\n\nFor Heating Degree Days (HDD)\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/HDD_3.jpg\" style=\"zoom:67%;\" />\n\nFor Cooling Degree Days (CDD)\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/CDD_3.jpg\" style=\"zoom:67%;\" />\n\n<p class=\"rubric\">References</p>\n<dl class=\"footnote brackets\">\n<dt class=\"label\" id=\"f1\"><a class=\"fn-backref\" href=\"#id4\">[1]</a>&emsp;Buyukalaca O, Bulut H, Yilmaz T. 2001. Analysis of variable-baseheating and cooling degree-days for Turkey. Appl. Energy 69 (4): 269–283</dt>\n<br>\n<dt class=\"label\" id=\"f2\"><a class=\"fn-backref\" href=\"#id13\">[2]</a>&emsp;CIBSE. 2006. Degree-days: theory and application. Technical Manual41. Chartered Institution of Building Services Engineers: London,UK. ISBN-10: 1-903287-76-6. <a class=\"reference external\" href=\"https://www.cibse.org/knowledge/knowledge-items/detail?id=a0q20000008I73TAAS\">https://www.cibse.org/knowledge/knowledge-items/detail?id=a0q20000008I73TAAS</a></dt>\n<br>\n<dt class=\"label\" id=\"f3\"><a class=\"fn-backref\" href=\"#id10\">[3]</a>&emsp;COSTIC, « <a class=\"reference external\" href=\"https://www.costic.com/ressources-techniques-et-reglementaires/service-degres-jours-unifies\">https://www.costic.com/ressources-techniques-et-reglementaires/service-degres-jours-unifies</a> », consulted on (19/02/2020).</dt>\n<br>\n<dt class=\"label\" id=\"f4\"><a class=\"fn-backref\" href=\"#id10\">[4]</a>&emsp;Degree Days, 2020. <a class=\"reference external\" href=\"https://www.degreedays.net/calculation\">https://www.degreedays.net/calculation</a>, consulted on (20/02/2020)</dt>\n<br>\n<dt class=\"label\" id=\"f5\"><a class=\"fn-backref\" href=\"#id2\">[5]</a>&emsp;Eto, J. H. (1988). On using degree-days to account for the effects of weather on annual energy use in office buildings. Energy and Buildings, 113-127. Obtained from <a class=\"reference external\" href=\"https://doi.org/10.1016/0378-7788(88)90073-4\">https://doi.org/10.1016/0378-7788(88)90073-4</a></dt>\n<br>\n<dt class=\"label\" id=\"f6\"><a class=\"fn-backref\" href=\"#id19\">[6]</a>&emsp;Groupe d’étude des marchés de chauffage et de climatisation (GEM/CC), 2007. Guide de rédaction des clauses techniques des marchés publics d’exploitation de chauffage avec ou sans gros entretien des matériels et avec obligation de résultat: Paris, France, Ministère de l’Économie des Finances et de l’Industrie. Obtained from: <a class=\"reference external\" href=\"https://www.economie.gouv.fr/daj/guide-redaction-des-clauses-techniques-des-marches-publics-dexploitation-chauffage-avec-ou-sans\">https://www.economie.gouv.fr/daj/guide-redaction-des-clauses-techniques-des-marches-publics-dexploitation-chauffage-avec-ou-sans</a></dt>\n<br>\n<dt class=\"label\" id=\"f7\"><a class=\"fn-backref\" href=\"#id14\">[7]</a>&emsp;Matzarakis, A., &amp; Balafoutis, C. (2004). Heating degree-days over Greece as an index of energy consumption. International Journal of Climatology, 1817 - 1828. doi:10.1002/joc.1107</dt>\n<br>\n<dt class=\"label\" id=\"f8\"><a class=\"fn-backref\" href=\"#id18\">[8]</a>&emsp;Météo-France, « Degres jours unifies - DJU », Relevés et statistiques, 2017 (consulted on 19/02/2020).</dt>\n<br>\n<dt class=\"label\" id=\"f9\"><a class=\"fn-backref\" href=\"#id6\">[9]</a>&emsp;Papakostas, K., Mavromatis, T., &amp; Kyriakis, N. (2010). Impact of the ambient temperature rise on the energy consumption for heating and cooling in residential buildings of Greece. Renewable Energy, 35(7), 1376-1379.</dt>\n<br>\n<dt class=\"label\" id=\"f10\"><a class=\"fn-backref\" href=\"#id3\">[10]</a>&emsp;Spinoni, J., Vogt, J., &amp; Barbosa, P. (2015). European degree-day climatologies and trends for the period 1951-2011. International Journal of Climatology, 25-36. doi:10.1002/joc.3959. Obtained from https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/joc.3959</dt>\n<br>\n<dt class=\"label\" id=\"f11\"><a class=\"fn-backref\" href=\"#id15\">[11]</a>&emsp;Spinoni, J., Vogt, J. V., Barbosa, P., Dosio, A., McCormick, N., Bigano, A., &amp; Füssel, H. (2018). Changes of heating and cooling degree‐days in Europe from 1981 to 2100, 38, e191–e208. doi:10.1002/joc.5362</dt>\n<br>\n<dt class=\"label\" id=\"f12\"><a class=\"fn-backref\" href=\"#id9\">[12]</a>&emsp;UK Met-Office, 2020. <a class=\"reference external\" href=\"http://www.metoffice.gov.uk/\">http://www.metoffice.gov.uk/</a></dt>\n<br>\n<dt class=\"label\" id=\"f13\"><a class=\"fn-backref\" href=\"#id5\">[13]</a>&emsp;Valor, E., Meneu, V., &amp; Caselles, V. (2001). Daily Air Temperature and Electricity Load in Spain. Journal of Applied Meteorology and Climatology, 1413-1421. Obtained from <a class=\"reference external\" href=\"https://doi.org/10.1175/1520-0450(2001)040%3C1413:DATAEL%3E2.0.CO;2\">https://doi.org/10.1175/1520-0450(2001)040%3C1413:DATAEL%3E2.0.CO;2</a></dt>\n<br>\n<dt class=\"label\" id=\"f14\"><a class=\"fn-backref\" href=\"#id8\">[14]</a>(<a href=\"#id7\">1</a>,<a href=\"#id8\">2</a>)&emsp;Wibig J. 2003. Heating degree days and cooling degree days variabilityin Lodz in the period 1931–2000. In Fifth International Conferenceon Urban Climate. Lodz, Poland</dt>\n</dl>\n\n## Building calendar\n\n### What is a “building calendar”?\n\nA building calendar is the representation of the working process of a building. It means that it gathers days with similar energy consumption profiles e.g.: week days / week-end days.\n\n##### Example\n\nFollowing picture represents a building with a calendar constitute by 3 day-groups:\n\n* NormalDays: Nominal mode of the building with a 5-parameters.\n* SaturdaysMondays: Slowed down activity with a 4-parameters.\n* Sundays: No activity (only basal consumption) with a 2-parameters.\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/bem_api/building_calendar.jpg\" style=\"zoom:67%;\" />\n\nHow are building calendar computed?\n\n##### Warning!\n\nFollowing informations are true only for the “daily” mode. “Monthly” mode only tolerates one single day group.\n\nFollowing are described methods used by the BuildingEnergyComponent to compute the building calendar:\n* Don’t try to improve the building calendar\n* Try to improve the building calendar\n\n__Don’t try to improve the building calendar__\n\nIf the `BuildingEnergyComponent` is called with the instruction of not trying to improve the building calendar two scenarios are possible:\n* __The user didn’t provide its own building calendar__: In this case all observations are gathered within the same single day group. Only one model is computed.\n* __The user provided its own building calendar__: In this case a sub-model (also named day group model) is computed for each day groups. In addition to global model performance metrics, all of these sub-models will all have their own performance metrics computed. Computed sub-models may have different thermal signatures.\n\n__Try to improve the building calendar__\n\nIf the `BuildingEnergyComponent` is called with the instruction of trying to improve the building calendar two scenarios are possible (same as previously):\n* __The user didn’t provide its own building calendar__: In this case the component will try to gather observations according to the day of the week (Monday, Tuesday, Wednesday…). Once week days are gathered within day groups, a sub-model (also named day group model) is computed for each day groups. In addition to global model performance metrics, all of these sub-models will all have their own performance metrics computed. Computed sub-models may have different thermal signatures.\n* __The user provided its own building calendar__: In this case the component will try to gather observations according to their associated day group. After that a sub-model (also named day group model) is computed for each day groups. In addition to global model performance metrics, all of these sub-models will all have their own performance metrics computed. Computed sub-models may have different thermal signatures.\n\n## Response Codes\n\nWe follow the error response format proposed in <a href=\"https://tools.ietf.org/html/rfc7807\" target=\"_blank\">RFC 7807</a> also known as Problem Details for HTTP APIs.  As with our normal API responses, your client must be prepared to gracefully handle additional members of the response.\n\n**The below table defines the HTTP Status codes that this API may return**\n\n| HTTP Status Code           | Error Reason|\n| ----------------           | ------------| \n| 400 <br/>UnknownIdError              | The model stored cannot be found with the current model ID.|\n| 401 <br/>APIKeyMissing      | Your request did not include an API key.This error suggests that your API key was missing from your request, or that something was formatted or named improperly in your header. Other reason could be: APIKeyInvalid: Your API key may be invalid, or you've attempted to access the wrong data center. Check that your API key was input correctly, and verify which data center to access. |\n| 403 <br/>Forbidden          | You are not permitted to access this resource. This is a generic error. Other reasons could be: UserDisabled: This account has been disabled. WrongDatacenter: The API key provided is linked to a different data center. This error suggests that you tried to contact the wrong data center. It's often associated with misconfigured libraries. |\n| 404 <br/>ResourceNotFound  | The requested resource could not be found. This error tells you a specific resource doesn't exist. It's possible that the resource has been moved or deleted, or that there's a typo in your request.|\n| 422 <br/>RequestValidationError              | An input is invalid|\n| 422 <br/>OutdatedModelError              | The stored model is outdated.|\n| 422 <br/>TableConversionError             | Provided table cannot be processed. It is probably due to a bad datetime column format.|\n| 422 <br/>InvalidDatetimeError             | Unexpected datetime.|\n| 422 <br/>SamplingDeclarationError             | Datetime column doesn’t fit the expected sampling (1-day).|\n| 422 <br/>MissingMandatoryColumnError            | One or several expected columns of the input table are missing.|\n| 422 <br/>MandatoryColumnWrongExpectedTypeError             | One or several columns have an unexpected type.|\n| 422 <br/>NotEnoughObservationsErrorModel             | Provided input table is empty.|\n| 422 <br/>DuplicatedTimestampsErrorModel             | Datetime column contain one or several duplicated items.|\n| 422 <br/>NotMonotonicIncreasingTimestampsError              | Datetime column is not monotonic increasing.|\n| 422 <br/>NonUniformSamplingError            | Datetime column of the input dataset is not uniform: all time steps encountered are not multiple of the minimal one.|\n| 422 <br/>InvalidTimedeltaError             | Unexpected timesteps in the datetime column. Expected timesteps: modulo 1-day.|\n| 422 <br/>WrongExpectedTimeDeltaCoverageError             | The datetime column contains too many gaps between consecutive records. The expected timesteps (1 day) is observed between less than 75% of rows.|\n| 422 <br/>WrongNbOfMonthlyObservationsError             | Found several energy values for the same month. When temporal resolution is monthly, a single energy value per month is allowed.|\n| 422 <br/>WrongMonthlyInformationErrorModel             | Found an energy value at a date that is not a month start. When temporal resolution is monthly, the mean monthly energy value should be provided in the first day of the month.|\n| 422 <br/>WrongDayGroupNbError              | Found several day group values. When temporal resolution is monthly, day groups do not make sense and should not be used.|\n| 422 <br/>ModelMigrationError              | The model stored cannot be used with the current application version, please re-create a new model.|\n| 422 <br/>TemporalResolutionRestrictionError              | Found configuration incompatibility with Temporal_resolution and other parametersWhen temporal resolution is monthly, improve_calendar and robust_regression cannot be true, and degree_days_mode cannot be in advanced mode|\n| 429 <br/>TooManyRequests   | You have exceeded the limit of 10 simultaneous connections. When you reach the connection limit, we'll throttle the server response. If any of your requests time out after you've reached the limit, those requests could still be considered open and continue to slow your connection.|\n\n## Deprecation of V1\n\nWith effect from Dec 2023, the `Building Energy Modeling` V1 APIs are deprecated. They are replaced by V2 APIs which run with the latest code and on a new platform. They have more structured request-response format and provide better precision in terms of generating energy consumption preditions. They have the same auth mechanism as V1 so the existing API Key used when calling the V1 APIs will also work for calling the V2 APIs.\n\nIf you are currently using V1 APIs then we strongly recommend that you to migrate to V2 APIs. Please refer \"Migrating to V2\" section for more details.\n\n## Migrating to V2\n\nThe `Building Energy Modeling` V2 APIs are built on top of the new backend platform and run with the latest code when compared to V1. They provide better precision in terms of predicting the energy model and offer a better way to structure the request and response payloads, yet provide similar functionality as V1 thereby keeping the migration impact minimal.\n\nThe BEM V2 has the following operations:\n\n1. Create\n2. Apply\n3. Assess quality for savings\n\nNote: The \"Get model information\" operation(available in V1) has been removed in V2, as essentially it returns the same model information as the Create service.\n\nIn order to facilitate easy migration from V1 to V2, a mapping recipe has been prepared that provides a detailed view of request-response paramater mappings. If you need any further help in terms of migration then please do not hesitate to contact us (see Support).\n\n<a href=\"https://sentinelsoftware.s3.eu-west-1.amazonaws.com/Migrating+to+BEM+API+V2.pdf\" download>Migrating to BEM API V2.pdf</a>\n\n## Support\n\nContact the SE Exchange support team at exchange.support@se.com and include:\n* Endpoint URL\n* Request/Response\n* Any additional information like Screenshots , Postman collections.\n\n Get help from the community [here](https://community.se.com/t5/Energy-Efficiency-and/bd-p/green-building-certification).\n\n\n\n\nContact Support:\n Name: Schneider Electric\n Email: exchange.support@se.com",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34682654"
+	},
+	"item": [
+		{
+			"name": "create",
+			"item": [
+				{
+					"name": "Create model",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"configuration\": {\n    \"columns\": {\n      \"target\": \"<string>\",\n      \"minTemperature\": \"<string>\",\n      \"maxTemperature\": \"<string>\",\n      \"meanTemperature\": \"<string>\"\n    },\n    \"dayGroups\": {\n      \"improve_calendar\": false,\n      \"max_merged_day_groups\": 3\n    },\n    \"temporal\": {\n      \"resolution\": \"daily\"\n    },\n    \"computation\": {\n      \"auto_apply\": false,\n      \"degree_days_mode\": \"basic\",\n      \"building_signatures\": [\n        \"twoParameters\",\n        \"threeParametersHeating\",\n        \"threeParametersCooling\",\n        \"fourParameters\",\n        \"fiveParameters\"\n      ]\n    }\n  },\n  \"trainTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"aliquip969\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  }\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/create?output_table_format=rows",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"create"
+							],
+							"query": [
+								{
+									"key": "output_table_format",
+									"value": "rows",
+									"description": "Format of the output table. By default this will be identical to the format of the input table."
+								}
+							]
+						},
+						"description": "\nIdentifies the energy model (a.k.a. \\\"thermal signature\\\") of a building, i.e. the relation between its daily or monthly energy consumption and contextual information (weather + other drivers)."
+					},
+					"response": [
+						{
+							"name": "Successful Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configuration\": {\n    \"columns\": {\n      \"target\": \"<string>\",\n      \"minTemperature\": \"<string>\",\n      \"maxTemperature\": \"<string>\",\n      \"meanTemperature\": \"<string>\"\n    },\n    \"dayGroups\": {\n      \"improve_calendar\": false,\n      \"max_merged_day_groups\": 3\n    },\n    \"temporal\": {\n      \"resolution\": \"daily\"\n    },\n    \"computation\": {\n      \"auto_apply\": false,\n      \"degree_days_mode\": \"basic\",\n      \"building_signatures\": [\n        \"twoParameters\",\n        \"threeParametersHeating\",\n        \"threeParametersCooling\",\n        \"fourParameters\",\n        \"fiveParameters\"\n      ]\n    }\n  },\n  \"trainTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"aliquip969\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/create?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"create"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"modelId\": \"<uuid>\",\n  \"modelInformation\": {\n    \"dayGroups\": {\n      \"cillum0d4\": \"<string>\"\n    },\n    \"nbObservations\": \"<integer>\",\n    \"nbOutliers\": \"<integer>\"\n  },\n  \"dayGroupsInformation\": [\n    {\n      \"dayGroup\": \"<string>\",\n      \"buildingSignature\": \"threeParametersCooling\",\n      \"changePoint1\": \"<number>\",\n      \"changePoint2\": \"<number>\",\n      \"targetCol\": \"<string>\",\n      \"featureCols\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"degreeDaysMethod\": \"basic_mid\",\n      \"nbObservations\": \"<integer>\",\n      \"nbOutliers\": \"<integer>\",\n      \"degreeOfFreedom\": \"<integer>\",\n      \"regressionCoefficients\": [\n        \"<number>\",\n        \"<number>\"\n      ],\n      \"regressionIntercept\": \"<number>\",\n      \"outlierIndexes\": [\n        \"<integer>\",\n        \"<integer>\"\n      ],\n      \"modelPerformances\": {\n        \"r2Score\": \"<number>\",\n        \"relativeAbsoluteError\": \"<number>\",\n        \"rootRelativeSquaredError\": \"<number>\",\n        \"rootMeanSquaredError\": \"<number>\",\n        \"meanAbsoluteError\": \"<number>\",\n        \"medianAbsoluteError\": \"<number>\",\n        \"cvRootMeanSquaredError\": \"<number>\",\n        \"cvMeanAbsoluteError\": \"<number>\",\n        \"adjRootMeanSquaredError\": \"<number>\",\n        \"adjMeanAbsoluteError\": \"<number>\",\n        \"autoCorrelation\": \"<number>\",\n        \"absoluteErrorStd\": {\n          \"pariatur4d\": \"<number>\"\n        }\n      },\n      \"modelPerformancesWithoutOutliers\": {\n        \"r2Score\": \"<number>\",\n        \"relativeAbsoluteError\": \"<number>\",\n        \"rootRelativeSquaredError\": \"<number>\",\n        \"rootMeanSquaredError\": \"<number>\",\n        \"meanAbsoluteError\": \"<number>\",\n        \"medianAbsoluteError\": \"<number>\",\n        \"cvRootMeanSquaredError\": \"<number>\",\n        \"cvMeanAbsoluteError\": \"<number>\",\n        \"adjRootMeanSquaredError\": \"<number>\",\n        \"adjMeanAbsoluteError\": \"<number>\",\n        \"autoCorrelation\": \"<number>\",\n        \"absoluteErrorStd\": {\n          \"qui_19\": \"<number>\"\n        }\n      }\n    },\n    {\n      \"dayGroup\": \"<string>\",\n      \"buildingSignature\": \"fiveParameters\",\n      \"changePoint1\": \"<number>\",\n      \"changePoint2\": \"<number>\",\n      \"targetCol\": \"<string>\",\n      \"featureCols\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"degreeDaysMethod\": \"basic_mid\",\n      \"nbObservations\": \"<integer>\",\n      \"nbOutliers\": \"<integer>\",\n      \"degreeOfFreedom\": \"<integer>\",\n      \"regressionCoefficients\": [\n        \"<number>\",\n        \"<number>\"\n      ],\n      \"regressionIntercept\": \"<number>\",\n      \"outlierIndexes\": [\n        \"<integer>\",\n        \"<integer>\"\n      ],\n      \"modelPerformances\": {\n        \"r2Score\": \"<number>\",\n        \"relativeAbsoluteError\": \"<number>\",\n        \"rootRelativeSquaredError\": \"<number>\",\n        \"rootMeanSquaredError\": \"<number>\",\n        \"meanAbsoluteError\": \"<number>\",\n        \"medianAbsoluteError\": \"<number>\",\n        \"cvRootMeanSquaredError\": \"<number>\",\n        \"cvMeanAbsoluteError\": \"<number>\",\n        \"adjRootMeanSquaredError\": \"<number>\",\n        \"adjMeanAbsoluteError\": \"<number>\",\n        \"autoCorrelation\": \"<number>\",\n        \"absoluteErrorStd\": {\n          \"reprehenderita\": \"<number>\",\n          \"officia_94d\": \"<number>\"\n        }\n      },\n      \"modelPerformancesWithoutOutliers\": {\n        \"r2Score\": \"<number>\",\n        \"relativeAbsoluteError\": \"<number>\",\n        \"rootRelativeSquaredError\": \"<number>\",\n        \"rootMeanSquaredError\": \"<number>\",\n        \"meanAbsoluteError\": \"<number>\",\n        \"medianAbsoluteError\": \"<number>\",\n        \"cvRootMeanSquaredError\": \"<number>\",\n        \"cvMeanAbsoluteError\": \"<number>\",\n        \"adjRootMeanSquaredError\": \"<number>\",\n        \"adjMeanAbsoluteError\": \"<number>\",\n        \"autoCorrelation\": \"<number>\",\n        \"absoluteErrorStd\": {\n          \"cillum_5\": \"<number>\",\n          \"veniam_b75\": \"<number>\"\n        }\n      }\n    }\n  ],\n  \"globalPerformances\": {\n    \"r2Score\": \"<number>\",\n    \"relativeAbsoluteError\": \"<number>\",\n    \"rootRelativeSquaredError\": \"<number>\",\n    \"rootMeanSquaredError\": \"<number>\",\n    \"meanAbsoluteError\": \"<number>\",\n    \"medianAbsoluteError\": \"<number>\",\n    \"cvRootMeanSquaredError\": \"<number>\",\n    \"cvMeanAbsoluteError\": \"<number>\",\n    \"adjRootMeanSquaredError\": \"<number>\",\n    \"adjMeanAbsoluteError\": \"<number>\",\n    \"autoCorrelation\": \"<number>\",\n    \"absoluteErrorStd\": {\n      \"cillum262\": \"<number>\",\n      \"deserunt_bf\": \"<number>\",\n      \"incididunt_9\": \"<number>\",\n      \"est3\": \"<number>\",\n      \"eiusmod_27\": \"<number>\"\n    }\n  },\n  \"globalPerformancesWithoutDiscarded\": {\n    \"r2Score\": \"<number>\",\n    \"relativeAbsoluteError\": \"<number>\",\n    \"rootRelativeSquaredError\": \"<number>\",\n    \"rootMeanSquaredError\": \"<number>\",\n    \"meanAbsoluteError\": \"<number>\",\n    \"medianAbsoluteError\": \"<number>\",\n    \"cvRootMeanSquaredError\": \"<number>\",\n    \"cvMeanAbsoluteError\": \"<number>\",\n    \"adjRootMeanSquaredError\": \"<number>\",\n    \"adjMeanAbsoluteError\": \"<number>\",\n    \"autoCorrelation\": \"<number>\",\n    \"absoluteErrorStd\": {\n      \"Duisfc\": \"<number>\",\n      \"esse_3\": \"<number>\"\n    }\n  },\n  \"autoApplyTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"dolor6\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  }\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configuration\": {\n    \"columns\": {\n      \"target\": \"<string>\",\n      \"minTemperature\": \"<string>\",\n      \"maxTemperature\": \"<string>\",\n      \"meanTemperature\": \"<string>\"\n    },\n    \"dayGroups\": {\n      \"improve_calendar\": false,\n      \"max_merged_day_groups\": 3\n    },\n    \"temporal\": {\n      \"resolution\": \"daily\"\n    },\n    \"computation\": {\n      \"auto_apply\": false,\n      \"degree_days_mode\": \"basic\",\n      \"building_signatures\": [\n        \"twoParameters\",\n        \"threeParametersHeating\",\n        \"threeParametersCooling\",\n        \"fourParameters\",\n        \"fiveParameters\"\n      ]\n    }\n  },\n  \"trainTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"aliquip969\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/create?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"create"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						},
+						{
+							"name": "Unprocessable Entity",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configuration\": {\n    \"columns\": {\n      \"target\": \"<string>\",\n      \"minTemperature\": \"<string>\",\n      \"maxTemperature\": \"<string>\",\n      \"meanTemperature\": \"<string>\"\n    },\n    \"dayGroups\": {\n      \"improve_calendar\": false,\n      \"max_merged_day_groups\": 3\n    },\n    \"temporal\": {\n      \"resolution\": \"daily\"\n    },\n    \"computation\": {\n      \"auto_apply\": false,\n      \"degree_days_mode\": \"basic\",\n      \"building_signatures\": [\n        \"twoParameters\",\n        \"threeParametersHeating\",\n        \"threeParametersCooling\",\n        \"fourParameters\",\n        \"fiveParameters\"\n      ]\n    }\n  },\n  \"trainTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"aliquip969\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/create?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"create"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"TemporalResolutionRestrictionError\",\n  \"message\": \"Found configuration incompatibility with Temporal_resolution and other parametersWhen temporal resolution is monthly, improve_calendar and robust_regression cannot be true, and degree_days_mode cannot be in advanced mode\",\n  \"detail\": \"\"\n}"
+						},
+						{
+							"name": "Internal Server Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configuration\": {\n    \"columns\": {\n      \"target\": \"<string>\",\n      \"minTemperature\": \"<string>\",\n      \"maxTemperature\": \"<string>\",\n      \"meanTemperature\": \"<string>\"\n    },\n    \"dayGroups\": {\n      \"improve_calendar\": false,\n      \"max_merged_day_groups\": 3\n    },\n    \"temporal\": {\n      \"resolution\": \"daily\"\n    },\n    \"computation\": {\n      \"auto_apply\": false,\n      \"degree_days_mode\": \"basic\",\n      \"building_signatures\": [\n        \"twoParameters\",\n        \"threeParametersHeating\",\n        \"threeParametersCooling\",\n        \"fourParameters\",\n        \"fiveParameters\"\n      ]\n    }\n  },\n  \"trainTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"aliquip969\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/create?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"create"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"InternalServerError\",\n  \"message\": \"Something when wrong inside the application\",\n  \"detail\": \"\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "apply",
+			"item": [
+				{
+					"name": "Apply model",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"testTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"occaecate\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"occaecat_b9\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  },\n  \"faultDetection\": \"<boolean>\",\n  \"faultDetectionThresholdNbStd\": 2,\n  \"removeFaultsFromSavings\": \"<boolean>\"\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/apply?output_table_format=rows",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"apply"
+							],
+							"query": [
+								{
+									"key": "output_table_format",
+									"value": "rows",
+									"description": "Format of the output table. By default this will be identical to the format of the input table."
+								}
+							]
+						},
+						"description": "Uses an existing model to predict the energy that a building would have consumed under given context/usage conditions represented by the provided dataset (containing weather and possibly other drivers). If the actual energy consumption is also provided in the dataset, savings can also be computed, as well as faults."
+					},
+					"response": [
+						{
+							"name": "Successful Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"testTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"occaecate\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"occaecat_b9\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  },\n  \"faultDetection\": \"<boolean>\",\n  \"faultDetectionThresholdNbStd\": 2,\n  \"removeFaultsFromSavings\": \"<boolean>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/apply?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"apply"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"predictTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"nulla9\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"in_0\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"amet_e0d\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"idb5\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  }\n}"
+						},
+						{
+							"name": "Bad Request",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"testTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"occaecate\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"occaecat_b9\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  },\n  \"faultDetection\": \"<boolean>\",\n  \"faultDetectionThresholdNbStd\": 2,\n  \"removeFaultsFromSavings\": \"<boolean>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/apply?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"apply"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"UnknownIdError\",\n  \"message\": \"The model stored cannot be found with the current model ID.\",\n  \"detail\": \"\"\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"testTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"occaecate\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"occaecat_b9\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  },\n  \"faultDetection\": \"<boolean>\",\n  \"faultDetectionThresholdNbStd\": 2,\n  \"removeFaultsFromSavings\": \"<boolean>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/apply?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"apply"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						},
+						{
+							"name": "Unprocessable Entity",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"testTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"occaecate\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"occaecat_b9\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  },\n  \"faultDetection\": \"<boolean>\",\n  \"faultDetectionThresholdNbStd\": 2,\n  \"removeFaultsFromSavings\": \"<boolean>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/apply?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"apply"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"WrongDayGroupNbError\",\n  \"message\": \"Found several day group values. When temporal resolution is monthly, day groups do not make sense and should not be used.\",\n  \"detail\": \"\"\n}"
+						},
+						{
+							"name": "Internal Server Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"testTbl\": {\n    \"format\": \"columns\",\n    \"columns\": {\n      \"occaecate\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"occaecat_b9\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    },\n    \"index\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"indexName\": \"<string>\"\n  },\n  \"faultDetection\": \"<boolean>\",\n  \"faultDetectionThresholdNbStd\": 2,\n  \"removeFaultsFromSavings\": \"<boolean>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/apply?output_table_format=rows",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"apply"
+									],
+									"query": [
+										{
+											"key": "output_table_format",
+											"value": "rows",
+											"description": "Format of the output table. By default this will be identical to the format of the input table."
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"InternalServerError\",\n  \"message\": \"Something when wrong inside the application\",\n  \"detail\": \"\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "assess-quality-for-savings",
+			"item": [
+				{
+					"name": "Assess model quality for savings",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"config\": {\n    \"targetSavingsRatio\": \"<number>\",\n    \"uncertaintyRatio\": \"<number>\",\n    \"confidenceLevel\": \"<number>\",\n    \"assessmentPeriod\": \"<integer>\"\n  }\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/assess-quality-for-savings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"assess-quality-for-savings"
+							]
+						},
+						"description": "You may wish to use a model created with this component to measure future energy savings, for example after some retrofit operation. But you do not need the same level of quality from your model to measure 2% savings or 30% savings: a much more precise prediction is needed to measure small savings of 2% and be sure that this is not 'just noise'. Also, the shorter the assessment period will be, and the more precise you model needs to be. This service helps you to determine if your model is good enough to measure a given target of energy savings with a given confidence level, based on predictions made during a given number of days (assessment period)."
+					},
+					"response": [
+						{
+							"name": "Successful Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"config\": {\n    \"targetSavingsRatio\": \"<number>\",\n    \"uncertaintyRatio\": \"<number>\",\n    \"confidenceLevel\": \"<number>\",\n    \"assessmentPeriod\": \"<integer>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/assess-quality-for-savings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"assess-quality-for-savings"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"acceptableForSavings\": \"<boolean>\",\n  \"maxAcceptableCvrmse\": \"<number>\",\n  \"trueModelUncertainty\": \"<number>\"\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"config\": {\n    \"targetSavingsRatio\": \"<number>\",\n    \"uncertaintyRatio\": \"<number>\",\n    \"confidenceLevel\": \"<number>\",\n    \"assessmentPeriod\": \"<integer>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/assess-quality-for-savings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"assess-quality-for-savings"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						},
+						{
+							"name": "Unprocessable Entity",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"config\": {\n    \"targetSavingsRatio\": \"<number>\",\n    \"uncertaintyRatio\": \"<number>\",\n    \"confidenceLevel\": \"<number>\",\n    \"assessmentPeriod\": \"<integer>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/assess-quality-for-savings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"assess-quality-for-savings"
+									]
+								}
+							},
+							"status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"detail\": [],\n  \"type\": \"RequestValidationError\",\n  \"message\": \"An input is invalid\"\n}"
+						},
+						{
+							"name": "Internal Server Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"modelId\": \"<uuid>\",\n  \"config\": {\n    \"targetSavingsRatio\": \"<number>\",\n    \"uncertaintyRatio\": \"<number>\",\n    \"confidenceLevel\": \"<number>\",\n    \"assessmentPeriod\": \"<integer>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/assess-quality-for-savings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"assess-quality-for-savings"
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"InternalServerError\",\n  \"message\": \"Something when wrong inside the application\",\n  \"detail\": \"\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "create-model",
+			"item": [
+				{
+					"name": "Create model",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Inputs\": {\n    \"trainDataset\": [\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"datetimeName\": \"<string>\",\n    \"targetName\": \"<string>\",\n    \"positiveDriverNames\": \"None\",\n    \"minTempName\": \"None\",\n    \"driverNames\": \"None\",\n    \"improveCalendar\": \"false\",\n    \"signatureType\": \"None\",\n    \"maxTempName\": \"None\",\n    \"maxNbMergedDayGroups\": 3,\n    \"degreeDaysMethod\": \"basic\",\n    \"dayGroupsName\": \"None\",\n    \"temporalResolution\": \"daily\",\n    \"robustnessMode\": \"default\",\n    \"localTimeZone\": \"None\",\n    \"averageTempName\": \"None\"\n  }\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/create-model?api-version=2.0&format=swagger&detailed=true",
+							"protocol": "https",
+							"host": [
+								"cors",
+								"redoc",
+								"ly"
+							],
+							"path": [
+								"https:",
+								"",
+								"sandbox.exchange.se.com",
+								"analytics-building-energy-modeling",
+								"create-model"
+							],
+							"query": [
+								{
+									"key": "api-version",
+									"value": "2.0",
+									"description": "(Required) The API version to use"
+								},
+								{
+									"key": "format",
+									"value": "swagger",
+									"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+								},
+								{
+									"key": "detailed",
+									"value": "true",
+									"description": "(Required) The format of the input to the web service"
+								}
+							]
+						},
+						"description": "### Description \n\nIdentifies the energy model (a.k.a. \"thermal signature\") of a building, i.e. the relation between its daily or monthly energy consumption and contextual information (weather + other drivers).\n\n"
+					},
+					"response": [
+						{
+							"name": "Execution results",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"trainDataset\": [\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"datetimeName\": \"<string>\",\n    \"targetName\": \"<string>\",\n    \"positiveDriverNames\": \"None\",\n    \"minTempName\": \"None\",\n    \"driverNames\": \"None\",\n    \"improveCalendar\": \"false\",\n    \"signatureType\": \"None\",\n    \"maxTempName\": \"None\",\n    \"maxNbMergedDayGroups\": 3,\n    \"degreeDaysMethod\": \"basic\",\n    \"dayGroupsName\": \"None\",\n    \"temporalResolution\": \"daily\",\n    \"robustnessMode\": \"default\",\n    \"localTimeZone\": \"None\",\n    \"averageTempName\": \"None\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/create-model?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"create-model"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"Results\": {\n    \"submodels\": [\n      {\n        \"day_group\": \"<string>\",\n        \"nb_training_samples\": \"<string>\",\n        \"nb_outliers\": \"<string>\",\n        \"signature_type\": \"<string>\",\n        \"degree_days_method\": \"<string>\",\n        \"nb_model_parameters\": \"<string>\",\n        \"change_points\": \"<string>\",\n        \"drivers\": \"<string>\",\n        \"coefficients\": \"<string>\",\n        \"intercept\": \"<string>\",\n        \"absolute_error_std\": \"<string>\",\n        \"adj_mean_absolute_error\": \"<string>\",\n        \"adj_root_mean_squared_error\": \"<string>\",\n        \"auto_correlation\": \"<string>\",\n        \"cv_root_mean_squared_error\": \"<string>\",\n        \"mean_absolute_error\": \"<string>\",\n        \"median_absolute_error\": \"<string>\",\n        \"r2_score\": \"<string>\",\n        \"root_mean_squared_error\": \"<string>\"\n      },\n      {\n        \"day_group\": \"<string>\",\n        \"nb_training_samples\": \"<string>\",\n        \"nb_outliers\": \"<string>\",\n        \"signature_type\": \"<string>\",\n        \"degree_days_method\": \"<string>\",\n        \"nb_model_parameters\": \"<string>\",\n        \"change_points\": \"<string>\",\n        \"drivers\": \"<string>\",\n        \"coefficients\": \"<string>\",\n        \"intercept\": \"<string>\",\n        \"absolute_error_std\": \"<string>\",\n        \"adj_mean_absolute_error\": \"<string>\",\n        \"adj_root_mean_squared_error\": \"<string>\",\n        \"auto_correlation\": \"<string>\",\n        \"cv_root_mean_squared_error\": \"<string>\",\n        \"mean_absolute_error\": \"<string>\",\n        \"median_absolute_error\": \"<string>\",\n        \"r2_score\": \"<string>\",\n        \"root_mean_squared_error\": \"<string>\"\n      }\n    ],\n    \"prediction\": [\n      {\n        \"date_time\": \"<string>\",\n        \"discarded_for_model_creation\": \"<string>\",\n        \"<targetName>\": \"<string>\",\n        \"prediction\": \"<string>\",\n        \"prediction_residual\": \"<string>\",\n        \"cumulative_savings\": \"<string>\",\n        \"fault_detection_upper_limit\": \"<string>\",\n        \"fault_detection_lower_limit\": \"<string>\",\n        \"<minTempName>\": \"<string>\",\n        \"<maxTempName>\": \"<string>\",\n        \"<averageTempName>\": \"<string>\",\n        \"reference_temperature\": \"<string>\",\n        \"hdd\": \"<string>\",\n        \"cdd\": \"<string>\",\n        \"<driverName>\": \"<string>\",\n        \"day_groups\": \"<string>\",\n        \"cumulative_savings_<dayGroup>\": \"<string>\",\n        \"predicted_oue_contribution\": \"<string>\",\n        \"estimated_actual_oue_contribution\": \"<string>\",\n        \"predicted_hdd_contribution\": \"<string>\",\n        \"estimated_actual_hdd_contribution\": \"<string>\",\n        \"predicted_cdd_contribution\": \"<string>\",\n        \"estimated_actual_cdd_contribution\": \"<string>\",\n        \"predicted_<driverName>_contribution\": \"<string>\",\n        \"estimated_actual_<driverName>_contribution\": \"<string>\",\n        \"NTS_hdd_predicted_energy\": \"<string>\",\n        \"NTS_hdd_actual_energy\": \"<string>\",\n        \"NTS_cdd_predicted_energy\": \"<string>\",\n        \"NTS_cdd_actual_energy\": \"<string>\",\n        \"NTS_reftemp_predicted_energy\": \"<string>\",\n        \"NTS_reftemp_actual_energy\": \"<string>\",\n        \"NTS_<driverName>_predicted_energy\": \"<string>\",\n        \"NTS_<driverName>_actual_energy\": \"<string>\",\n        \"middleTemp\": \"<string>\"\n      },\n      {\n        \"date_time\": \"<string>\",\n        \"discarded_for_model_creation\": \"<string>\",\n        \"<targetName>\": \"<string>\",\n        \"prediction\": \"<string>\",\n        \"prediction_residual\": \"<string>\",\n        \"cumulative_savings\": \"<string>\",\n        \"fault_detection_upper_limit\": \"<string>\",\n        \"fault_detection_lower_limit\": \"<string>\",\n        \"<minTempName>\": \"<string>\",\n        \"<maxTempName>\": \"<string>\",\n        \"<averageTempName>\": \"<string>\",\n        \"reference_temperature\": \"<string>\",\n        \"hdd\": \"<string>\",\n        \"cdd\": \"<string>\",\n        \"<driverName>\": \"<string>\",\n        \"day_groups\": \"<string>\",\n        \"cumulative_savings_<dayGroup>\": \"<string>\",\n        \"predicted_oue_contribution\": \"<string>\",\n        \"estimated_actual_oue_contribution\": \"<string>\",\n        \"predicted_hdd_contribution\": \"<string>\",\n        \"estimated_actual_hdd_contribution\": \"<string>\",\n        \"predicted_cdd_contribution\": \"<string>\",\n        \"estimated_actual_cdd_contribution\": \"<string>\",\n        \"predicted_<driverName>_contribution\": \"<string>\",\n        \"estimated_actual_<driverName>_contribution\": \"<string>\",\n        \"NTS_hdd_predicted_energy\": \"<string>\",\n        \"NTS_hdd_actual_energy\": \"<string>\",\n        \"NTS_cdd_predicted_energy\": \"<string>\",\n        \"NTS_cdd_actual_energy\": \"<string>\",\n        \"NTS_reftemp_predicted_energy\": \"<string>\",\n        \"NTS_reftemp_actual_energy\": \"<string>\",\n        \"NTS_<driverName>_predicted_energy\": \"<string>\",\n        \"NTS_<driverName>_actual_energy\": \"<string>\",\n        \"middleTemp\": \"<string>\"\n      }\n    ],\n    \"modelInfo\": [\n      {\n        \"modelID\": \"<string>\",\n        \"creation_date\": \"<string>\",\n        \"nb_training_samples\": \"<integer>\",\n        \"nb_outliers\": \"<integer>\",\n        \"nb_model_parameters\": \"<integer>\"\n      },\n      {\n        \"modelID\": \"<string>\",\n        \"creation_date\": \"<string>\",\n        \"nb_training_samples\": \"<integer>\",\n        \"nb_outliers\": \"<integer>\",\n        \"nb_model_parameters\": \"<integer>\"\n      }\n    ],\n    \"modelPerformance\": [\n      {\n        \"adj_mean_absolute_error\": \"<double>\",\n        \"adj_root_mean_squared_error\": \"<double>\",\n        \"auto_correlation\": \"<double>\",\n        \"cv_root_mean_squared_error\": \"<double>\",\n        \"mean_absolute_error\": \"<double>\",\n        \"median_absolute_error\": \"<double>\",\n        \"r2_score\": \"<double>\",\n        \"root_mean_squared_error\": \"<double>\"\n      },\n      {\n        \"adj_mean_absolute_error\": \"<double>\",\n        \"adj_root_mean_squared_error\": \"<double>\",\n        \"auto_correlation\": \"<double>\",\n        \"cv_root_mean_squared_error\": \"<double>\",\n        \"mean_absolute_error\": \"<double>\",\n        \"median_absolute_error\": \"<double>\",\n        \"r2_score\": \"<double>\",\n        \"root_mean_squared_error\": \"<double>\"\n      }\n    ],\n    \"calendar\": [\n      {\n        \"<originalDayGroup>\": \"<string>\"\n      },\n      {\n        \"<originalDayGroup>\": \"<string>\"\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"trainDataset\": [\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"datetimeName\": \"<string>\",\n    \"targetName\": \"<string>\",\n    \"positiveDriverNames\": \"None\",\n    \"minTempName\": \"None\",\n    \"driverNames\": \"None\",\n    \"improveCalendar\": \"false\",\n    \"signatureType\": \"None\",\n    \"maxTempName\": \"None\",\n    \"maxNbMergedDayGroups\": 3,\n    \"degreeDaysMethod\": \"basic\",\n    \"dayGroupsName\": \"None\",\n    \"temporalResolution\": \"daily\",\n    \"robustnessMode\": \"default\",\n    \"localTimeZone\": \"None\",\n    \"averageTempName\": \"None\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/create-model?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"create-model"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "apply-model",
+			"item": [
+				{
+					"name": "Apply model",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ],\n    \"applyDataset\": [\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      },\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"faultDetection\": \"false\"\n  }\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/apply-model?api-version=2.0&format=swagger&detailed=true",
+							"protocol": "https",
+							"host": [
+								"cors",
+								"redoc",
+								"ly"
+							],
+							"path": [
+								"https:",
+								"",
+								"sandbox.exchange.se.com",
+								"analytics-building-energy-modeling",
+								"apply-model"
+							],
+							"query": [
+								{
+									"key": "api-version",
+									"value": "2.0",
+									"description": "(Required) The API version to use"
+								},
+								{
+									"key": "format",
+									"value": "swagger",
+									"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+								},
+								{
+									"key": "detailed",
+									"value": "true",
+									"description": "(Required) The format of the input to the web service"
+								}
+							]
+						},
+						"description": "### Description \n\nUses an existing model to predict the energy that a building would have consumed under given context/usage conditions represented by the provided dataset (containing weather and possibly other drivers). If the actual energy consumption is also provided in the dataset, savings can also be computed, as well as faults.\n"
+					},
+					"response": [
+						{
+							"name": "Execution results",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ],\n    \"applyDataset\": [\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      },\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"faultDetection\": \"false\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/apply-model?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"apply-model"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"Results\": {\n    \"prediction\": [\n      {\n        \"date_time\": \"<string>\",\n        \"<targetName>\": \"<string>\",\n        \"prediction\": \"<string>\",\n        \"prediction_residual\": \"<string>\",\n        \"cumulative_savings\": \"<string>\",\n        \"fault_detection_upper_limit\": \"<string>\",\n        \"fault_detection_lower_limit\": \"<string>\",\n        \"consumption_anomaly\": \"<string>\",\n        \"<minTempName>\": \"<string>\",\n        \"<maxTempName>\": \"<string>\",\n        \"<averageTempName>\": \"<string>\",\n        \"reference_temperature\": \"<string>\",\n        \"hdd\": \"<string>\",\n        \"cdd\": \"<string>\",\n        \"<driverName>\": \"<string>\",\n        \"day_groups\": \"<string>\",\n        \"cumulative_savings_<dayGroup>\": \"<string>\",\n        \"predicted_oue_contribution\": \"<string>\",\n        \"estimated_actual_oue_contribution\": \"<string>\",\n        \"predicted_hdd_contribution\": \"<string>\",\n        \"estimated_actual_hdd_contribution\": \"<string>\",\n        \"predicted_cdd_contribution\": \"<string>\",\n        \"estimated_actual_cdd_contribution\": \"<string>\",\n        \"predicted_<driverName>_contribution\": \"<string>\",\n        \"estimated_actual_<driverName>_contribution\": \"<string>\",\n        \"NTS_hdd_predicted_energy\": \"<string>\",\n        \"NTS_hdd_actual_energy\": \"<string>\",\n        \"NTS_cdd_predicted_energy\": \"<string>\",\n        \"NTS_cdd_actual_energy\": \"<string>\",\n        \"NTS_reftemp_predicted_energy\": \"<string>\",\n        \"NTS_reftemp_actual_energy\": \"<string>\",\n        \"NTS_<driverName>_predicted_energy\": \"<string>\",\n        \"NTS_<driverName>_actual_energy\": \"<string>\",\n        \"middleTemp\": \"<string>\"\n      },\n      {\n        \"date_time\": \"<string>\",\n        \"<targetName>\": \"<string>\",\n        \"prediction\": \"<string>\",\n        \"prediction_residual\": \"<string>\",\n        \"cumulative_savings\": \"<string>\",\n        \"fault_detection_upper_limit\": \"<string>\",\n        \"fault_detection_lower_limit\": \"<string>\",\n        \"consumption_anomaly\": \"<string>\",\n        \"<minTempName>\": \"<string>\",\n        \"<maxTempName>\": \"<string>\",\n        \"<averageTempName>\": \"<string>\",\n        \"reference_temperature\": \"<string>\",\n        \"hdd\": \"<string>\",\n        \"cdd\": \"<string>\",\n        \"<driverName>\": \"<string>\",\n        \"day_groups\": \"<string>\",\n        \"cumulative_savings_<dayGroup>\": \"<string>\",\n        \"predicted_oue_contribution\": \"<string>\",\n        \"estimated_actual_oue_contribution\": \"<string>\",\n        \"predicted_hdd_contribution\": \"<string>\",\n        \"estimated_actual_hdd_contribution\": \"<string>\",\n        \"predicted_cdd_contribution\": \"<string>\",\n        \"estimated_actual_cdd_contribution\": \"<string>\",\n        \"predicted_<driverName>_contribution\": \"<string>\",\n        \"estimated_actual_<driverName>_contribution\": \"<string>\",\n        \"NTS_hdd_predicted_energy\": \"<string>\",\n        \"NTS_hdd_actual_energy\": \"<string>\",\n        \"NTS_cdd_predicted_energy\": \"<string>\",\n        \"NTS_cdd_actual_energy\": \"<string>\",\n        \"NTS_reftemp_predicted_energy\": \"<string>\",\n        \"NTS_reftemp_actual_energy\": \"<string>\",\n        \"NTS_<driverName>_predicted_energy\": \"<string>\",\n        \"NTS_<driverName>_actual_energy\": \"<string>\",\n        \"middleTemp\": \"<string>\"\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ],\n    \"applyDataset\": [\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      },\n      {\n        \"data_row\": \"<string>\",\n        \"data_col\": \"<string>\",\n        \"data_val\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"faultDetection\": \"false\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/apply-model?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"apply-model"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "assess-model-quality-for-savings",
+			"item": [
+				{
+					"name": "Assess model quality for savings",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"confidenceLevel\": \"0.05\",\n    \"assessmentPeriod\": \"<string>\",\n    \"targetSavingsRatio\": \"<string>\",\n    \"uncertaintyRatio\": \"<string>\"\n  }\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/assess-model-quality-for-savings?api-version=2.0&format=swagger&detailed=true",
+							"protocol": "https",
+							"host": [
+								"cors",
+								"redoc",
+								"ly"
+							],
+							"path": [
+								"https:",
+								"",
+								"sandbox.exchange.se.com",
+								"analytics-building-energy-modeling",
+								"assess-model-quality-for-savings"
+							],
+							"query": [
+								{
+									"key": "api-version",
+									"value": "2.0",
+									"description": "(Required) The API version to use"
+								},
+								{
+									"key": "format",
+									"value": "swagger",
+									"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+								},
+								{
+									"key": "detailed",
+									"value": "true",
+									"description": "(Required) The format of the input to the web service"
+								}
+							]
+						},
+						"description": "### Description \n\nYou may wish to use a model created with this component to measure future energy savings, for example after some retrofit operation. But you do not need the same level of quality from your model to measure 2% savings or 30% savings: a much more precise prediction is needed to measure small savings of 2% and be sure that this is not 'just noise'. Also, the shorter the assessment period will be, and the more precise you model needs to be. This service helps you to determine if your model is good enough to measure a given target of energy savings with a given confidence level, based on predictions made during a given number of days (assessment period).\n"
+					},
+					"response": [
+						{
+							"name": "Execution results",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"confidenceLevel\": \"0.05\",\n    \"assessmentPeriod\": \"<string>\",\n    \"targetSavingsRatio\": \"<string>\",\n    \"uncertaintyRatio\": \"<string>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/assess-model-quality-for-savings?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"assess-model-quality-for-savings"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"Results\": {\n    \"modelQual\": [\n      {\n        \"acceptable_for_savings\": \"<boolean>\",\n        \"max_acceptable_cvrmse\": \"<double>\",\n        \"true_model_uncertainty\": \"<double>\"\n      },\n      {\n        \"acceptable_for_savings\": \"<boolean>\",\n        \"max_acceptable_cvrmse\": \"<double>\",\n        \"true_model_uncertainty\": \"<double>\"\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {\n    \"confidenceLevel\": \"0.05\",\n    \"assessmentPeriod\": \"<string>\",\n    \"targetSavingsRatio\": \"<string>\",\n    \"uncertaintyRatio\": \"<string>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/assess-model-quality-for-savings?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"assess-model-quality-for-savings"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "get-model-information",
+			"item": [
+				{
+					"name": "Get model information",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {}\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/get-model-information?api-version=2.0&format=swagger&detailed=true",
+							"protocol": "https",
+							"host": [
+								"cors",
+								"redoc",
+								"ly"
+							],
+							"path": [
+								"https:",
+								"",
+								"sandbox.exchange.se.com",
+								"analytics-building-energy-modeling",
+								"get-model-information"
+							],
+							"query": [
+								{
+									"key": "api-version",
+									"value": "2.0",
+									"description": "(Required) The API version to use"
+								},
+								{
+									"key": "format",
+									"value": "swagger",
+									"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+								},
+								{
+									"key": "detailed",
+									"value": "true",
+									"description": "(Required) The format of the input to the web service"
+								}
+							]
+						},
+						"description": "### Description \n\nRetrieves information about a previously created model. This service returns the exact same outputs as the `createModel` service.\n"
+					},
+					"response": [
+						{
+							"name": "Execution results",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {}\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/get-model-information?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"get-model-information"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"Results\": {\n    \"submodels\": [\n      {\n        \"day_group\": \"<string>\",\n        \"nb_training_samples\": \"<string>\",\n        \"nb_outliers\": \"<string>\",\n        \"signature_type\": \"<string>\",\n        \"degree_days_method\": \"<string>\",\n        \"nb_model_parameters\": \"<string>\",\n        \"change_points\": \"<string>\",\n        \"drivers\": \"<string>\",\n        \"coefficients\": \"<string>\",\n        \"intercept\": \"<string>\",\n        \"absolute_error_std\": \"<string>\",\n        \"adj_mean_absolute_error\": \"<string>\",\n        \"adj_root_mean_squared_error\": \"<string>\",\n        \"auto_correlation\": \"<string>\",\n        \"cv_root_mean_squared_error\": \"<string>\",\n        \"mean_absolute_error\": \"<string>\",\n        \"median_absolute_error\": \"<string>\",\n        \"r2_score\": \"<string>\",\n        \"root_mean_squared_error\": \"<string>\"\n      },\n      {\n        \"day_group\": \"<string>\",\n        \"nb_training_samples\": \"<string>\",\n        \"nb_outliers\": \"<string>\",\n        \"signature_type\": \"<string>\",\n        \"degree_days_method\": \"<string>\",\n        \"nb_model_parameters\": \"<string>\",\n        \"change_points\": \"<string>\",\n        \"drivers\": \"<string>\",\n        \"coefficients\": \"<string>\",\n        \"intercept\": \"<string>\",\n        \"absolute_error_std\": \"<string>\",\n        \"adj_mean_absolute_error\": \"<string>\",\n        \"adj_root_mean_squared_error\": \"<string>\",\n        \"auto_correlation\": \"<string>\",\n        \"cv_root_mean_squared_error\": \"<string>\",\n        \"mean_absolute_error\": \"<string>\",\n        \"median_absolute_error\": \"<string>\",\n        \"r2_score\": \"<string>\",\n        \"root_mean_squared_error\": \"<string>\"\n      }\n    ],\n    \"prediction\": [\n      {\n        \"date_time\": \"<string>\",\n        \"discarded_for_model_creation\": \"<string>\",\n        \"<targetName>\": \"<string>\",\n        \"prediction\": \"<string>\",\n        \"prediction_residual\": \"<string>\",\n        \"cumulative_savings\": \"<string>\",\n        \"fault_detection_upper_limit\": \"<string>\",\n        \"fault_detection_lower_limit\": \"<string>\",\n        \"<minTempName>\": \"<string>\",\n        \"<maxTempName>\": \"<string>\",\n        \"<averageTempName>\": \"<string>\",\n        \"reference_temperature\": \"<string>\",\n        \"hdd\": \"<string>\",\n        \"cdd\": \"<string>\",\n        \"<driverName>\": \"<string>\",\n        \"day_groups\": \"<string>\",\n        \"cumulative_savings_<dayGroup>\": \"<string>\",\n        \"predicted_oue_contribution\": \"<string>\",\n        \"estimated_actual_oue_contribution\": \"<string>\",\n        \"predicted_hdd_contribution\": \"<string>\",\n        \"estimated_actual_hdd_contribution\": \"<string>\",\n        \"predicted_cdd_contribution\": \"<string>\",\n        \"estimated_actual_cdd_contribution\": \"<string>\",\n        \"predicted_<driverName>_contribution\": \"<string>\",\n        \"estimated_actual_<driverName>_contribution\": \"<string>\",\n        \"NTS_hdd_predicted_energy\": \"<string>\",\n        \"NTS_hdd_actual_energy\": \"<string>\",\n        \"NTS_cdd_predicted_energy\": \"<string>\",\n        \"NTS_cdd_actual_energy\": \"<string>\",\n        \"NTS_reftemp_predicted_energy\": \"<string>\",\n        \"NTS_reftemp_actual_energy\": \"<string>\",\n        \"NTS_<driverName>_predicted_energy\": \"<string>\",\n        \"NTS_<driverName>_actual_energy\": \"<string>\",\n        \"middleTemp\": \"<string>\"\n      },\n      {\n        \"date_time\": \"<string>\",\n        \"discarded_for_model_creation\": \"<string>\",\n        \"<targetName>\": \"<string>\",\n        \"prediction\": \"<string>\",\n        \"prediction_residual\": \"<string>\",\n        \"cumulative_savings\": \"<string>\",\n        \"fault_detection_upper_limit\": \"<string>\",\n        \"fault_detection_lower_limit\": \"<string>\",\n        \"<minTempName>\": \"<string>\",\n        \"<maxTempName>\": \"<string>\",\n        \"<averageTempName>\": \"<string>\",\n        \"reference_temperature\": \"<string>\",\n        \"hdd\": \"<string>\",\n        \"cdd\": \"<string>\",\n        \"<driverName>\": \"<string>\",\n        \"day_groups\": \"<string>\",\n        \"cumulative_savings_<dayGroup>\": \"<string>\",\n        \"predicted_oue_contribution\": \"<string>\",\n        \"estimated_actual_oue_contribution\": \"<string>\",\n        \"predicted_hdd_contribution\": \"<string>\",\n        \"estimated_actual_hdd_contribution\": \"<string>\",\n        \"predicted_cdd_contribution\": \"<string>\",\n        \"estimated_actual_cdd_contribution\": \"<string>\",\n        \"predicted_<driverName>_contribution\": \"<string>\",\n        \"estimated_actual_<driverName>_contribution\": \"<string>\",\n        \"NTS_hdd_predicted_energy\": \"<string>\",\n        \"NTS_hdd_actual_energy\": \"<string>\",\n        \"NTS_cdd_predicted_energy\": \"<string>\",\n        \"NTS_cdd_actual_energy\": \"<string>\",\n        \"NTS_reftemp_predicted_energy\": \"<string>\",\n        \"NTS_reftemp_actual_energy\": \"<string>\",\n        \"NTS_<driverName>_predicted_energy\": \"<string>\",\n        \"NTS_<driverName>_actual_energy\": \"<string>\",\n        \"middleTemp\": \"<string>\"\n      }\n    ],\n    \"modelInfo\": [\n      {\n        \"modelID\": \"<string>\",\n        \"creation_date\": \"<string>\",\n        \"nb_training_samples\": \"<integer>\",\n        \"nb_outliers\": \"<integer>\",\n        \"nb_model_parameters\": \"<integer>\"\n      },\n      {\n        \"modelID\": \"<string>\",\n        \"creation_date\": \"<string>\",\n        \"nb_training_samples\": \"<integer>\",\n        \"nb_outliers\": \"<integer>\",\n        \"nb_model_parameters\": \"<integer>\"\n      }\n    ],\n    \"modelPerformance\": [\n      {\n        \"adj_mean_absolute_error\": \"<double>\",\n        \"adj_root_mean_squared_error\": \"<double>\",\n        \"auto_correlation\": \"<double>\",\n        \"cv_root_mean_squared_error\": \"<double>\",\n        \"mean_absolute_error\": \"<double>\",\n        \"median_absolute_error\": \"<double>\",\n        \"r2_score\": \"<double>\",\n        \"root_mean_squared_error\": \"<double>\"\n      },\n      {\n        \"adj_mean_absolute_error\": \"<double>\",\n        \"adj_root_mean_squared_error\": \"<double>\",\n        \"auto_correlation\": \"<double>\",\n        \"cv_root_mean_squared_error\": \"<double>\",\n        \"mean_absolute_error\": \"<double>\",\n        \"median_absolute_error\": \"<double>\",\n        \"r2_score\": \"<double>\",\n        \"root_mean_squared_error\": \"<double>\"\n      }\n    ],\n    \"calendar\": [\n      {\n        \"<originalDayGroup>\": \"<string>\"\n      },\n      {\n        \"<originalDayGroup>\": \"<string>\"\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<API Key>",
+										"description": "Added as a part of security scheme: apikey"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"Inputs\": {\n    \"modelID\": [\n      {\n        \"modelID\": \"<string>\"\n      },\n      {\n        \"modelID\": \"<string>\"\n      }\n    ]\n  },\n  \"GlobalParameters\": {}\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://cors.redoc.ly/https://sandbox.exchange.se.com/analytics-building-energy-modeling/get-model-information?api-version=2.0&format=swagger&detailed=true",
+									"protocol": "https",
+									"host": [
+										"cors",
+										"redoc",
+										"ly"
+									],
+									"path": [
+										"https:",
+										"",
+										"sandbox.exchange.se.com",
+										"analytics-building-energy-modeling",
+										"get-model-information"
+									],
+									"query": [
+										{
+											"key": "api-version",
+											"value": "2.0",
+											"description": "(Required) The API version to use"
+										},
+										{
+											"key": "format",
+											"value": "swagger",
+											"description": "(Required) Specify if the format of the input to the web service should be swagger or not"
+										},
+										{
+											"key": "detailed",
+											"value": "true",
+											"description": "(Required) The format of the input to the web service"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://sandbox.dev.api.exchange.se.app/analytics-building-energy-modeling/v2"
+		}
+	]
+}
