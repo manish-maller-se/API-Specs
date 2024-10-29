@@ -1,0 +1,1856 @@
+{
+	"info": {
+		"_postman_id": "fcf833da-955f-4d0d-8e1d-e1112d7f889b",
+		"name": "EcoStruxure™ Letter of Agreement - Internal API",
+		"description": "\n# Overview\n\nEcoStruxure™ Letter of Agreement API simplifies the process of getting signed letters of agreement from customers, making it easier and more secure than ever before. With this API, Schneider Electric can streamline their digital offers and make the signing process more efficient. This is a huge advantage in today's fast-paced business world, where time is money and efficiency is key.\n\nThe API ensures that all agreements are legally binding and provides an added layer of security to protect sensitive information. By digitizing this process, Schneider Electric can reduce the risk of errors or lost paperwork, while also improving customer satisfaction by providing a more convenient way to sign agreements. Overall, the Letter of Agreement API is a smart investment for any business looking to streamline their operations and stay ahead in today's competitive marketplace.\n\n\n## API overview and usage\n\nThe EcoStruxure™ Letter of Agreement API is designed for internal applications within Schneider Electric. The API enables applications to impersonate customers and create letter of agreement requests. Below are the steps to use the API effectively:\n\n### Step 1: Generate an Access Token\n\nTo interact with the API on behalf of a customer, you need to generate an access token using the `/v1/oauth-impersonate/token` endpoint. This endpoint requires the following parameters:\n\n- `grant_type` (string): Set this value to `\"user_token\"`.\n- `client_id` (string): The consumer key of the API product.\n- `client_secret` (string): The consumer secret of the API product.\n- `email` (string): The email ID of the customer to be impersonated.\n\n\nMake a `POST` request to the `/v1/oauth-impersonate/token` endpoint with the required parameters using your preferred method (e.g., cURL). Here's an example cURL command:\n\n```shell\ncurl -X POST 'https://api.exchange.se.com/ecostruxure/v1/oauth-impersonate/token' \\\n-H 'Content-Type: application/x-www-form-urlencoded' \\\n--data-urlencode 'email=john.doe@yopmail.com' \\\n--data-urlencode 'grant_type=user_token' \\\n--data-urlencode 'client_aid=abcdeff' \\\n--data-urlencode 'client_secret=******'\n```\n\nThe response will include an access token, which you should store securely for subsequent API requests.\n\n### Step 2: Create a Letter of Agreement\n\nOnce you have obtained the access token, you can use it to create a letter of agreement request using the `/loa/v1/agreements` endpoint. This endpoint allows you to initiate the creation of a letter of agreement.\n\nMake a `POST` request to the `/loa/v1/agreements` endpoint with the following information in the request body:\n\n- `templateId` (string): The ID of the template to be used for the agreement.\n- `signer` (object): Details of the signatory, including their name and email.\n- `cc` (object, optional): Details of an individual to be cc'ed in the agreement exchange emails.\n- `formData` (array, optional): An array of form field name and value pairs to pre-populate the agreement.\n- `notification` (object, optional): Notification settings for agreement status changes.\n\nHere's an example request body for creating an agreement with a signer and notification settings:\n\n```json\n{\n  \"templateId\": \"1891f288-eed5-4253-8934-a1160207b6b9\",\n  \"signer\": {\n    \"name\": \"Signer Example\",\n    \"email\": \"example@example.com\"\n  },\n  \"notification\": {\n    \"isEnabled\": true,\n    \"emails\": [\n      \"example@se.com\"\n    ]\n  }\n}\n```\n\nEnsure you include the access token obtained in the previous step in the request headers as a Bearer token.\n\nThe API will respond with a status code and the created agreement object if successful.\n\n**Note:** Remember to handle any potential errors by examining the response status codes and error messages provided in the API documentation.\n\n\n# Documentation\n    \n## How to sign up\n    \nThis is an internal API product. Please contact ecostruxure.openness@se.com for access.\n\n## Authentication guide\n\nThe API is meant for Schneider Electric internal applications, application can choose one of following method to generate token and invoke API on behalf of a customer.\n\n### Schneider Electric application integrated with cIAM\n\nIf the Schneider Electric application is integrated with cIAM, application will already have access to cIAM id_token. Schneider Electric application can exchange this id_token for API access token using `Exchange cIAM id_token` operation. CURL example below. This way the token generated is associated with the cIAM identity, the consent provided by the user will be stored against the cIAM identity.\n\n```shell\ncurl -X POST 'https://api.exchange.se.com/ecostruxure/v1/oauth/token' \\\n-H 'Content-Type: application/x-www-form-urlencoded' \\\n--data-urlencode 'id_token=base64encodedidtokenfromciam' \\\n--data-urlencode 'grant_type=id_token' \\\n--data-urlencode 'client_id=abcdeff' \\\n--data-urlencode 'client_secret=******'\n```\n\n### Schneider Electric application not integrated with cIAM\n\nIf the Schneider Electric application is not integrated with cIAM, application can generate an access token using `OAuth User Impersonation` operation. CURL example below. This way the token generated is associated with the cIAM identity, the consent provided by the user will be stored against the cIAM identity.\n\n```shell\ncurl -X POST 'https://api.exchange.se.com/ecostruxure/v1/oauth-impersonate/token' \\\n-H 'Content-Type: application/x-www-form-urlencoded' \\\n--data-urlencode 'email=john.doe@yopmail.com' \\\n--data-urlencode 'grant_type=user_token' \\\n--data-urlencode 'client_id=abcdeff' \\\n--data-urlencode 'client_secret=******'\n```\n\n<!-- ReDoc-Inject: <security-definitions> -->\n\n\n## Support\n\nContact the SE Exchange support team at exchange.support@se.com and include:\n* Endpoint URL\n* Request/Response\n* Any additional information like Screenshots, Postman collections.\n\n## Release Notes\n\n|version|Notes|\n|-------|-----|\n|1.3.0|Ability to delete an agreement|\n|1.2.0|Ability to override email subject and message while creating an agreement|\n|1.1.0|Ability to create LOA based on previous agreement|\n|1.0.0|Initial version|\n\nContact Support:\n Name: Schneider Electric\n Email: exchange.support@se.com",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34682654"
+	},
+	"item": [
+		{
+			"name": "v1",
+			"item": [
+				{
+					"name": "oauth",
+					"item": [
+						{
+							"name": "token",
+							"item": [
+								{
+									"name": "Exchange cIAM id_token",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "id_token",
+													"description": "(Required) grant type of the token"
+												},
+												{
+													"key": "client_id",
+													"value": "<string>",
+													"description": "(Required) consumer key of the API product"
+												},
+												{
+													"key": "client_secret",
+													"value": "<string>",
+													"description": "(Required) consumer secret of the API product"
+												},
+												{
+													"key": "id_token",
+													"value": "<string>",
+													"description": "(Required) Base64 encoded CIAM ID token."
+												},
+												{
+													"key": "scope",
+													"value": "<string>",
+													"description": "scope of the API resource. separate with space if more than one scope is requested"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/oauth/token",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"oauth",
+												"token"
+											]
+										},
+										"description": "OAuth id_token grant type is a security schema that is used by internal systems or applications of Schneider Electric to exchange cIAM id_token for API access token."
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "id_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "id_token",
+															"value": "<string>",
+															"description": "(Required) Base64 encoded CIAM ID token."
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth",
+														"token"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"access_token\": \"<string>\",\n  \"token_type\": \"<string>\",\n  \"expires_in\": \"<integer>\",\n  \"scope\": \"<string>\"\n}"
+										},
+										{
+											"name": "Invalid input",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "id_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "id_token",
+															"value": "<string>",
+															"description": "(Required) Base64 encoded CIAM ID token."
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth",
+														"token"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Unauthorized",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "id_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "id_token",
+															"value": "<string>",
+															"description": "(Required) Base64 encoded CIAM ID token."
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth",
+														"token"
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Internal Server Error",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "id_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "id_token",
+															"value": "<string>",
+															"description": "(Required) Base64 encoded CIAM ID token."
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth",
+														"token"
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "oauth-impersonate",
+					"item": [
+						{
+							"name": "token",
+							"item": [
+								{
+									"name": "OAuth User Impersonation",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "user_token",
+													"description": "(Required) grant type of the token"
+												},
+												{
+													"key": "client_id",
+													"value": "<string>",
+													"description": "(Required) consumer key of the API product"
+												},
+												{
+													"key": "client_secret",
+													"value": "<string>",
+													"description": "(Required) consumer secret of the API product"
+												},
+												{
+													"key": "email",
+													"value": "<string>",
+													"description": "(Required) email id of the user"
+												},
+												{
+													"key": "scope",
+													"value": "<string>",
+													"description": "scope of the API resource. separate with space if more than one scope is requested"
+												},
+												{
+													"key": "federatedId",
+													"value": "<string>",
+													"description": "unique user identifier in ciam"
+												},
+												{
+													"key": "companyFederationId",
+													"value": "<string>",
+													"description": "unique company identifier ciam"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/oauth-impersonate/token",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"oauth-impersonate",
+												"token"
+											]
+										},
+										"description": "Oauth Impersonation is a security schema that is used by internal systems or applications of Schneider Electric which do not use cIAM as an identity provider for authenticating the users to access data. This is a custom-built security schema which uses the combination of apiKey and client credentials grant in order to issue the access token."
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "user_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "email",
+															"value": "<string>",
+															"description": "(Required) email id of the user"
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														},
+														{
+															"key": "federatedId",
+															"value": "<string>",
+															"description": "unique user identifier in ciam"
+														},
+														{
+															"key": "companyFederationId",
+															"value": "<string>",
+															"description": "unique company identifier ciam"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth-impersonate/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth-impersonate",
+														"token"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"access_token\": \"<string>\",\n  \"token_type\": \"<string>\",\n  \"expires_in\": \"<integer>\",\n  \"scope\": \"<string>\"\n}"
+										},
+										{
+											"name": "Invalid input",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "user_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "email",
+															"value": "<string>",
+															"description": "(Required) email id of the user"
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														},
+														{
+															"key": "federatedId",
+															"value": "<string>",
+															"description": "unique user identifier in ciam"
+														},
+														{
+															"key": "companyFederationId",
+															"value": "<string>",
+															"description": "unique company identifier ciam"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth-impersonate/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth-impersonate",
+														"token"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Unauthorized",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "user_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "email",
+															"value": "<string>",
+															"description": "(Required) email id of the user"
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														},
+														{
+															"key": "federatedId",
+															"value": "<string>",
+															"description": "unique user identifier in ciam"
+														},
+														{
+															"key": "companyFederationId",
+															"value": "<string>",
+															"description": "unique company identifier ciam"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth-impersonate/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth-impersonate",
+														"token"
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Internal Server Error",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "user_token",
+															"description": "(Required) grant type of the token"
+														},
+														{
+															"key": "client_id",
+															"value": "<string>",
+															"description": "(Required) consumer key of the API product"
+														},
+														{
+															"key": "client_secret",
+															"value": "<string>",
+															"description": "(Required) consumer secret of the API product"
+														},
+														{
+															"key": "email",
+															"value": "<string>",
+															"description": "(Required) email id of the user"
+														},
+														{
+															"key": "scope",
+															"value": "<string>",
+															"description": "scope of the API resource. separate with space if more than one scope is requested"
+														},
+														{
+															"key": "federatedId",
+															"value": "<string>",
+															"description": "unique user identifier in ciam"
+														},
+														{
+															"key": "companyFederationId",
+															"value": "<string>",
+															"description": "unique company identifier ciam"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/oauth-impersonate/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"oauth-impersonate",
+														"token"
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "loa",
+			"item": [
+				{
+					"name": "v1",
+					"item": [
+						{
+							"name": "agreements",
+							"item": [
+								{
+									"name": "{agreementId}",
+									"item": [
+										{
+											"name": "documents",
+											"item": [
+												{
+													"name": "combined",
+													"item": [
+														{
+															"name": "Fetch agreement document",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/pdf"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId/documents/combined",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"loa",
+																		"v1",
+																		"agreements",
+																		":agreementId",
+																		"documents",
+																		"combined"
+																	],
+																	"variable": [
+																		{
+																			"key": "agreementId",
+																			"value": "<string>",
+																			"description": "(Required) Agreement id."
+																		}
+																	]
+																},
+																"description": "The API enables to retrieve the signed document in PDF format for the agreement."
+															},
+															"response": [
+																{
+																	"name": "Success.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/pdf"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId/documents/combined",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"loa",
+																				"v1",
+																				"agreements",
+																				":agreementId",
+																				"documents",
+																				"combined"
+																			],
+																			"variable": [
+																				{
+																					"key": "agreementId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "text",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/pdf"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "<binary>"
+																},
+																{
+																	"name": "Invalid input",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId/documents/combined",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"loa",
+																				"v1",
+																				"agreements",
+																				":agreementId",
+																				"documents",
+																				"combined"
+																			],
+																			"variable": [
+																				{
+																					"key": "agreementId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Bad Request",
+																	"code": 400,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+																},
+																{
+																	"name": "Unauthorized",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId/documents/combined",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"loa",
+																				"v1",
+																				"agreements",
+																				":agreementId",
+																				"documents",
+																				"combined"
+																			],
+																			"variable": [
+																				{
+																					"key": "agreementId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																},
+																{
+																	"name": "Not found",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId/documents/combined",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"loa",
+																				"v1",
+																				"agreements",
+																				":agreementId",
+																				"documents",
+																				"combined"
+																			],
+																			"variable": [
+																				{
+																					"key": "agreementId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "Fetch an agreement",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements",
+														":agreementId"
+													],
+													"variable": [
+														{
+															"key": "agreementId",
+															"value": "<string>",
+															"description": "(Required) Agreement id."
+														}
+													]
+												},
+												"description": "This API allows to retrieve details of an agreement."
+											},
+											"response": [
+												{
+													"name": "Success.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"templateId\": \"<string>\",\n  \"signer\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"id\": \"<string>\",\n  \"status\": \"VOIDED\",\n  \"createdAt\": \"<dateTime>\",\n  \"updatedAt\": \"<dateTime>\",\n  \"cc\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"copyFrom\": {\n    \"agreementId\": \"<string>\",\n    \"isEditable\": \"<boolean>\"\n  },\n  \"formData\": [\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    },\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    }\n  ],\n  \"notification\": {\n    \"isEnabled\": \"<boolean>\",\n    \"emails\": [\n      \"<email>\",\n      \"<email>\"\n    ]\n  }\n}"
+												},
+												{
+													"name": "Invalid input",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "Bad Request",
+													"code": 400,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+												},
+												{
+													"name": "Unauthorized",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												},
+												{
+													"name": "Not found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										},
+										{
+											"name": "Delete an agreement",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId?reason=<string>",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements",
+														":agreementId"
+													],
+													"query": [
+														{
+															"key": "reason",
+															"value": "<string>",
+															"description": "(Required) Reason for deleting the agreement."
+														}
+													],
+													"variable": [
+														{
+															"key": "agreementId",
+															"value": "<string>",
+															"description": "(Required) Agreement id."
+														}
+													]
+												},
+												"description": "This API allows to delete an agreement. Agreement can be deleted only if it is not yet signed."
+											},
+											"response": [
+												{
+													"name": "Success.",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId?reason=<string>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"query": [
+																{
+																	"key": "reason",
+																	"value": "<string>",
+																	"description": "(Required) Reason for deleting the agreement."
+																}
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "No Content",
+													"code": 204,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												},
+												{
+													"name": "Invalid input",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId?reason=<string>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"query": [
+																{
+																	"key": "reason",
+																	"value": "<string>",
+																	"description": "(Required) Reason for deleting the agreement."
+																}
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "Bad Request",
+													"code": 400,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+												},
+												{
+													"name": "Unauthorized",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId?reason=<string>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"query": [
+																{
+																	"key": "reason",
+																	"value": "<string>",
+																	"description": "(Required) Reason for deleting the agreement."
+																}
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												},
+												{
+													"name": "Not found",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/loa/v1/agreements/:agreementId?reason=<string>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"loa",
+																"v1",
+																"agreements",
+																":agreementId"
+															],
+															"query": [
+																{
+																	"key": "reason",
+																	"value": "<string>",
+																	"description": "(Required) Reason for deleting the agreement."
+																}
+															],
+															"variable": [
+																{
+																	"key": "agreementId"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "List agreements",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{bearerToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/loa/v1/agreements",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"loa",
+												"v1",
+												"agreements"
+											]
+										},
+										"description": "This API allows to retrieve list of agreements for the customer.\n\nAs of version 1.3.0, this API excludes form-data in the response for each LOA. To know the form data for a LOA, use the API `GET /loa/v1/agreements/{agreementId}`."
+									},
+									"response": [
+										{
+											"name": "Success.",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "[\n  {\n    \"templateId\": \"<string>\",\n    \"signer\": {\n      \"email\": \"<email>\",\n      \"name\": \"<string>\",\n      \"emailSubject\": \"<string>\",\n      \"emailBody\": \"<string>\"\n    },\n    \"id\": \"<string>\",\n    \"status\": \"SENT\",\n    \"createdAt\": \"<dateTime>\",\n    \"updatedAt\": \"<dateTime>\",\n    \"cc\": {\n      \"email\": \"<email>\",\n      \"name\": \"<string>\",\n      \"emailSubject\": \"<string>\",\n      \"emailBody\": \"<string>\"\n    },\n    \"copyFrom\": {\n      \"agreementId\": \"<string>\",\n      \"isEditable\": \"<boolean>\"\n    },\n    \"formData\": [\n      {\n        \"name\": \"<string>\",\n        \"value\": \"<string>\",\n        \"isEditable\": false\n      },\n      {\n        \"name\": \"<string>\",\n        \"value\": \"<string>\",\n        \"isEditable\": false\n      }\n    ],\n    \"notification\": {\n      \"isEnabled\": \"<boolean>\",\n      \"emails\": [\n        \"<email>\",\n        \"<email>\"\n      ]\n    }\n  },\n  {\n    \"templateId\": \"<string>\",\n    \"signer\": {\n      \"email\": \"<email>\",\n      \"name\": \"<string>\",\n      \"emailSubject\": \"<string>\",\n      \"emailBody\": \"<string>\"\n    },\n    \"id\": \"<string>\",\n    \"status\": \"SENT\",\n    \"createdAt\": \"<dateTime>\",\n    \"updatedAt\": \"<dateTime>\",\n    \"cc\": {\n      \"email\": \"<email>\",\n      \"name\": \"<string>\",\n      \"emailSubject\": \"<string>\",\n      \"emailBody\": \"<string>\"\n    },\n    \"copyFrom\": {\n      \"agreementId\": \"<string>\",\n      \"isEditable\": \"<boolean>\"\n    },\n    \"formData\": [\n      {\n        \"name\": \"<string>\",\n        \"value\": \"<string>\",\n        \"isEditable\": false\n      },\n      {\n        \"name\": \"<string>\",\n        \"value\": \"<string>\",\n        \"isEditable\": false\n      }\n    ],\n    \"notification\": {\n      \"isEnabled\": \"<boolean>\",\n      \"emails\": [\n        \"<email>\",\n        \"<email>\"\n      ]\n    }\n  }\n]"
+										},
+										{
+											"name": "Invalid input",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Unauthorized",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements"
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								},
+								{
+									"name": "Create an agreement",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{bearerToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"templateId\": \"<string>\",\n  \"signer\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"id\": \"<string>\",\n  \"status\": \"VOIDED\",\n  \"createdAt\": \"<dateTime>\",\n  \"updatedAt\": \"<dateTime>\",\n  \"cc\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"copyFrom\": {\n    \"agreementId\": \"<string>\",\n    \"isEditable\": \"<boolean>\"\n  },\n  \"formData\": [\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    },\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    }\n  ],\n  \"notification\": {\n    \"isEnabled\": \"<boolean>\",\n    \"emails\": [\n      \"<email>\",\n      \"<email>\"\n    ]\n  }\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/loa/v1/agreements",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"loa",
+												"v1",
+												"agreements"
+											]
+										},
+										"description": "The API allows to initiate a letter of agreement."
+									},
+									"response": [
+										{
+											"name": "Agreement request initiated.",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"templateId\": \"<string>\",\n  \"signer\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"id\": \"<string>\",\n  \"status\": \"VOIDED\",\n  \"createdAt\": \"<dateTime>\",\n  \"updatedAt\": \"<dateTime>\",\n  \"cc\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"copyFrom\": {\n    \"agreementId\": \"<string>\",\n    \"isEditable\": \"<boolean>\"\n  },\n  \"formData\": [\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    },\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    }\n  ],\n  \"notification\": {\n    \"isEnabled\": \"<boolean>\",\n    \"emails\": [\n      \"<email>\",\n      \"<email>\"\n    ]\n  }\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements"
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"templateId\": \"<string>\",\n  \"signer\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"id\": \"<string>\",\n  \"status\": \"VOIDED\",\n  \"createdAt\": \"<dateTime>\",\n  \"updatedAt\": \"<dateTime>\",\n  \"cc\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"copyFrom\": {\n    \"agreementId\": \"<string>\",\n    \"isEditable\": \"<boolean>\"\n  },\n  \"formData\": [\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    },\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    }\n  ],\n  \"notification\": {\n    \"isEnabled\": \"<boolean>\",\n    \"emails\": [\n      \"<email>\",\n      \"<email>\"\n    ]\n  }\n}"
+										},
+										{
+											"name": "Invalid input",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"templateId\": \"<string>\",\n  \"signer\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"id\": \"<string>\",\n  \"status\": \"VOIDED\",\n  \"createdAt\": \"<dateTime>\",\n  \"updatedAt\": \"<dateTime>\",\n  \"cc\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"copyFrom\": {\n    \"agreementId\": \"<string>\",\n    \"isEditable\": \"<boolean>\"\n  },\n  \"formData\": [\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    },\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    }\n  ],\n  \"notification\": {\n    \"isEnabled\": \"<boolean>\",\n    \"emails\": [\n      \"<email>\",\n      \"<email>\"\n    ]\n  }\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Unauthorized",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"templateId\": \"<string>\",\n  \"signer\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"id\": \"<string>\",\n  \"status\": \"VOIDED\",\n  \"createdAt\": \"<dateTime>\",\n  \"updatedAt\": \"<dateTime>\",\n  \"cc\": {\n    \"email\": \"<email>\",\n    \"name\": \"<string>\",\n    \"emailSubject\": \"<string>\",\n    \"emailBody\": \"<string>\"\n  },\n  \"copyFrom\": {\n    \"agreementId\": \"<string>\",\n    \"isEditable\": \"<boolean>\"\n  },\n  \"formData\": [\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    },\n    {\n      \"name\": \"<string>\",\n      \"value\": \"<string>\",\n      \"isEditable\": false\n    }\n  ],\n  \"notification\": {\n    \"isEnabled\": \"<boolean>\",\n    \"emails\": [\n      \"<email>\",\n      \"<email>\"\n    ]\n  }\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/loa/v1/agreements",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"loa",
+														"v1",
+														"agreements"
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://dev.api.exchange.se.app/ecostruxure"
+		}
+	]
+}

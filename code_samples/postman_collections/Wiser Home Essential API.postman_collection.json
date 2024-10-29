@@ -1,0 +1,5242 @@
+{
+	"info": {
+		"_postman_id": "e3e6a105-dc55-469b-ad14-1b7745827916",
+		"name": "Wiser Home Essential API",
+		"description": "# Overview\n\nWiser Home is an internet connected smart home control system focusing primarily on heating but also allowing control of smart plugs, lighting, and shutters, with further device types planned for the future. The system allows multi-zone heating control whereby a user’s home may be divided into ‘rooms’, each being capable of individual temperature control.\n\nWiser Home Essential API that is available to our partners and describes how any HTTPS enabled client (e.g. an App, Browser, Python script, etc.) can retrieve current and historical data about the Wiser Home system and perform certain control actions such as changing the heating set point. The API is web-based and deals exclusively with the HTTPS Protocol and JSON-encoded text in HTTP request/response bodies.\n\n\n## API overview and usage\n\nThis API enables the following features:\n\n### Hubs\n\n- List of the hubs accessible from this API\n\n### Rooms\n\n- List the rooms in a system\n- For a given room\n    * Show the current and historical heating setpoint and ambient temperature\n    * Get and set the heating setpoint schedule\n    * Get and set the current heating setpoint\n    * List the devices associated with the room\n\n### Devices\n\n- List all the devices in a system\n- For a given device\n    * Show it’s type e.g. Thermostat, Smart Plug, Electrical Heating Actuator\n    * Show the current and historical energy consumption for Smart Plugs and Electrical Heating Actuator\n\n### Smart Plug\n\n- List all Smart Plug devices\n- For a given Smart Plug\n    * Show it’s current on/off state\n    * Turn it on or off\n\n### Lights\n\n- List all Lighting devices\n- For a given Light\n    * Show it’s current on/off and dimming (if supported) states\n    * Turn it on or off, and set the dimming level if the device supports dimming\n\n### Shutters\n\n- List all Shutter devices\n- For a given Shutter\n    * Show its current level\n    * Set the level\n\n# Documentation\n    \n## How to sign up\n    \n**Step 1:** [Register or login](https://exchange.se.com) with an Exchange account.\n\n**Step 2:** Subscribe to the [API product in our Shop](https://exchange.se.com).\n\n**Step 3:** After subscription, API credentials and usage details for the API are available in developer portal.\n\n## Authentication guide\n\nThis API supports the following authentication mechanism:\n\n### Personal Access Token Flow\n\nThis authorization mechanism is intended for end users who are using the API to access their own data in Schneider Electric's ecosystem. Upon purchasing the API, end users can generate a Personal Access Token directly from the Exchange DevPortal.\n\n**How to Generate a Personal Access Token**\n\n1. Log in to the [Exchange DevPortal](https://exchange.se.com).\n2. Navigate to the API product you have subscribed to.\n3. Locate the \"Generate Personal Access Token\" section and follow the on-screen instructions to create your token.\n\n**How to Use the Personal Access Token**\n\nOnce you have generated your Personal Access Token, you can use it as a Bearer Token to authorize your API calls.\n\n```bash\ncurl -X GET \"https://se-exchange-uat-uat.apigee.net/ecostruxure/wiser-home/partner/v1/hubs\" \\\n     -H \"Authorization: Bearer YOUR_PERSONAL_ACCESS_TOKEN\"\n```\n\nYour Personal Access Token serves as a credential that grants you access to your own data. Ensure that you keep it secure and never share it publicly.\n\n## Support\n\nContact our Exchange support team at exchange.support@se.com and include,\n\n    - Endpoint URL\n    - Request/Response of the URL\n    - Any additional information like Screenshots, Postman collections\n\nGet help from the community [here](https://community.se.com/).\n\n---\n\nContact Support:\n Name: Schneider Electric\n Email: exchange.support@se.com",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34682654"
+	},
+	"item": [
+		{
+			"name": "v1",
+			"item": [
+				{
+					"name": "status",
+					"item": [
+						{
+							"name": "Fetch API status",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/status",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"status"
+									]
+								},
+								"description": "Gets the status of the API."
+							},
+							"response": [
+								{
+									"name": "Success",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/v1/status",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"status"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [],
+									"cookie": [],
+									"body": ""
+								},
+								{
+									"name": "Returns an error message.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/v1/status",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"status"
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "hubs",
+					"item": [
+						{
+							"name": "{urn}",
+							"item": [
+								{
+									"name": "rooms",
+									"item": [
+										{
+											"name": "{roomId}",
+											"item": [
+												{
+													"name": "temperature",
+													"item": [
+														{
+															"name": "Fetch Room Temperature",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature?from=<string>&to=<string>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId",
+																		"temperature"
+																	],
+																	"query": [
+																		{
+																			"key": "from",
+																			"value": "<string>",
+																			"description": "The from date."
+																		},
+																		{
+																			"key": "to",
+																			"value": "<string>",
+																			"description": "The to date."
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "roomId",
+																			"value": "<integer>",
+																			"description": "(Required) The room identifier."
+																		}
+																	]
+																},
+																"description": "Get the temperatures for a specific room."
+															},
+															"response": [
+																{
+																	"name": "Returns a room temperature or temperatures depending on the dates supplied.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature?from=<string>&to=<string>",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"temperature"
+																			],
+																			"query": [
+																				{
+																					"key": "from",
+																					"value": "<string>",
+																					"description": "The from date."
+																				},
+																				{
+																					"key": "to",
+																					"value": "<string>",
+																					"description": "The to date."
+																				}
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"temperature_DegC\": \"<string>\",\n  \"setPoint_DegC\": \"<string>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature?from=<string>&to=<string>",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"temperature"
+																			],
+																			"query": [
+																				{
+																					"key": "from",
+																					"value": "<string>",
+																					"description": "The from date."
+																				},
+																				{
+																					"key": "to",
+																					"value": "<string>",
+																					"description": "The to date."
+																				}
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														},
+														{
+															"name": "Set Temperature for a Room",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"setPoint_DegC\": \"<string>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId",
+																		"temperature"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "roomId",
+																			"value": "<integer>",
+																			"description": "(Required) The room identifier."
+																		}
+																	]
+																},
+																"description": "Temperature set points in the range 5 to 30 degrees Celsius can be set for a given room via the following API request.\r\nAttempts to set temperatures outside of this range will result in a 400 (bad request) response."
+															},
+															"response": [
+																{
+																	"name": "Returns empty if temperature is successfully updated.",
+																	"originalRequest": {
+																		"method": "PATCH",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"setPoint_DegC\": \"<string>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"temperature"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "text",
+																	"header": [],
+																	"cookie": [],
+																	"body": ""
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "PATCH",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"setPoint_DegC\": \"<string>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"temperature"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Bad Request",
+																	"code": 400,
+																	"_postman_previewlanguage": "text",
+																	"header": [],
+																	"cookie": [],
+																	"body": ""
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "PATCH",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"setPoint_DegC\": \"<string>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"temperature"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																},
+																{
+																	"name": "Not Found",
+																	"originalRequest": {
+																		"method": "PATCH",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"setPoint_DegC\": \"<string>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/temperature",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"temperature"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												},
+												{
+													"name": "schedule",
+													"item": [
+														{
+															"name": "Fetch heating schedule for a room",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId",
+																		"schedule"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "roomId",
+																			"value": "<integer>",
+																			"description": "(Required) The room identifier."
+																		}
+																	]
+																},
+																"description": "Temperature set points in the range 5 to 30 degrees Celsius can be set for a given room via the following API request.\\r\\nAttempts to set temperatures outside of this range will result in a 400 (bad request) response."
+															},
+															"response": [
+																{
+																	"name": "Returns a heating room schedule.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\",\n      \"isValid\": \"<boolean>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														},
+														{
+															"name": "Set heating schedule for a room",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "PUT",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId",
+																		"schedule"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "roomId",
+																			"value": "<integer>",
+																			"description": "(Required) The room identifier."
+																		}
+																	]
+																}
+															},
+															"response": [
+																{
+																	"name": "Returns a heating room schedule.",
+																	"originalRequest": {
+																		"method": "PUT",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "text",
+																	"header": [],
+																	"cookie": [],
+																	"body": ""
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "PUT",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "PUT",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"setPoint_DegC\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												},
+												{
+													"name": "devices",
+													"item": [
+														{
+															"name": "List all Devices in Room",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/devices",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId",
+																		"devices"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "roomId",
+																			"value": "<integer>",
+																			"description": "(Required) The room identifier."
+																		}
+																	]
+																},
+																"description": "Smart Plugs, Lights and Shutters have both a system identifier (id) and an identifier specific to their device type\\r\\n(TypeSpecificId). The latter is used when accessing them via the /smartplugs, /lights and /shutters routes within this API."
+															},
+															"response": [
+																{
+																	"name": "Returns a list of all devices in a specific room.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/devices",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"devices"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"devices\": [\n    {\n      \"id\": \"<integer>\",\n      \"productType\": \"<string>\",\n      \"typeSpecificId\": \"<integer>\",\n      \"deviceLockEnabled\": \"<boolean>\",\n      \"displayedSignalStrength\": \"<string>\",\n      \"batteryLevel\": \"<string>\",\n      \"name\": \"<string>\",\n      \"roomId\": \"<integer>\"\n    },\n    {\n      \"id\": \"<integer>\",\n      \"productType\": \"<string>\",\n      \"typeSpecificId\": \"<integer>\",\n      \"deviceLockEnabled\": \"<boolean>\",\n      \"displayedSignalStrength\": \"<string>\",\n      \"batteryLevel\": \"<string>\",\n      \"name\": \"<string>\",\n      \"roomId\": \"<integer>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/devices",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"devices"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId/devices",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"rooms",
+																				":roomId",
+																				"devices"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "roomId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												},
+												{
+													"name": "Fetch Room By ID",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"rooms",
+																":roomId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "roomId",
+																	"value": "<integer>",
+																	"description": "(Required) The room identifier."
+																}
+															]
+														},
+														"description": "Get information about a specific room."
+													},
+													"response": [
+														{
+															"name": "Returns information about a specific room.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "roomId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"heatingIsOn\": \"<boolean>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "roomId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/rooms/:roomId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"rooms",
+																		":roomId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "roomId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "List Rooms",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn/rooms",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn",
+														"rooms"
+													],
+													"variable": [
+														{
+															"key": "urn",
+															"value": "<string>",
+															"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+														}
+													]
+												},
+												"description": "Get a list of all rooms."
+											},
+											"response": [
+												{
+													"name": "Returns a list of all rooms.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/rooms",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"rooms"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"rooms\": [\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"heatingIsOn\": \"<boolean>\"\n    },\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"heatingIsOn\": \"<boolean>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Returns an error message.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/rooms",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"rooms"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "devices",
+									"item": [
+										{
+											"name": "{deviceId}",
+											"item": [
+												{
+													"name": "energy",
+													"item": [
+														{
+															"name": "Fetch Device Energy",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId/energy?from=<string>&to=<string>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId",
+																		"energy"
+																	],
+																	"query": [
+																		{
+																			"key": "from",
+																			"value": "<string>",
+																			"description": "The from date."
+																		},
+																		{
+																			"key": "to",
+																			"value": "<string>",
+																			"description": "The to date."
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "deviceId",
+																			"value": "<integer>",
+																			"description": "(Required) The device identifier."
+																		}
+																	]
+																},
+																"description": "Get electrical energy consumption for a specific device."
+															},
+															"response": [
+																{
+																	"name": "Success",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId/energy?from=<string>&to=<string>",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"devices",
+																				":deviceId",
+																				"energy"
+																			],
+																			"query": [
+																				{
+																					"key": "from",
+																					"value": "<string>",
+																					"description": "The from date."
+																				},
+																				{
+																					"key": "to",
+																					"value": "<string>",
+																					"description": "The to date."
+																				}
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"instantaneousConsumption_Watts\": \"<double>\",\n  \"cumulativeConsumption_WattHours\": \"<double>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+																},
+																{
+																	"name": "Unauthorized",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId/energy?from=<string>&to=<string>",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"devices",
+																				":deviceId",
+																				"energy"
+																			],
+																			"query": [
+																				{
+																					"key": "from",
+																					"value": "<string>",
+																					"description": "The from date."
+																				},
+																				{
+																					"key": "to",
+																					"value": "<string>",
+																					"description": "The to date."
+																				}
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												},
+												{
+													"name": "schedule",
+													"item": [
+														{
+															"name": "Set device schedule",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "PUT",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId/schedule",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId",
+																		"schedule"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "deviceId",
+																			"value": "<integer>",
+																			"description": "(Required) Device ID"
+																		}
+																	]
+																},
+																"description": "Get and set the schedule for a specific device. These will differ dependant on the type of device.\r\nSmart Plugs and Smart Sockets have on/off schedules, Lights and Shutters have percentage schedules."
+															},
+															"response": [
+																{
+																	"name": "Returns the smart plug schedule.",
+																	"originalRequest": {
+																		"method": "PUT",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"devices",
+																				":deviceId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "text",
+																	"header": [],
+																	"cookie": [],
+																	"body": ""
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "PUT",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"devices",
+																				":deviceId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																},
+																{
+																	"name": "Not Found",
+																	"originalRequest": {
+																		"method": "PUT",
+																		"header": [
+																			{
+																				"key": "Content-Type",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"body": {
+																			"mode": "raw",
+																			"raw": "{\n  \"monday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"time\": \"<integer>\",\n      \"percentage\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}",
+																			"options": {
+																				"raw": {
+																					"headerFamily": "json",
+																					"language": "json"
+																				}
+																			}
+																		},
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				"devices",
+																				":deviceId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												},
+												{
+													"name": "Fetch Device Info",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"devices",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) The device identifier."
+																}
+															]
+														},
+														"description": "Get information about a specific device."
+													},
+													"response": [
+														{
+															"name": "Returns information about a specific device.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<integer>\",\n  \"productType\": \"<string>\",\n  \"typeSpecificId\": \"<integer>\",\n  \"deviceLockEnabled\": \"<boolean>\",\n  \"displayedSignalStrength\": \"<string>\",\n  \"batteryLevel\": \"<string>\",\n  \"name\": \"<string>\",\n  \"roomId\": \"<integer>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Set Device Lock",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PATCH",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"deviceLockEnabled\": \"<boolean>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"devices",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) The device identifier."
+																}
+															]
+														},
+														"description": "Set the Device Lock for a specific device."
+													},
+													"response": [
+														{
+															"name": "Returns empty if the device is successfully updated.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"deviceLockEnabled\": \"<boolean>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"body": ""
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"deviceLockEnabled\": \"<boolean>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Not Found",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"deviceLockEnabled\": \"<boolean>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/devices/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"devices",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "List Devices in Hub",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn/devices",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn",
+														"devices"
+													],
+													"variable": [
+														{
+															"key": "urn",
+															"value": "<string>",
+															"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+														}
+													]
+												},
+												"description": "Get a list of all devices."
+											},
+											"response": [
+												{
+													"name": "Returns a list of all Devices.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/devices",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"devices"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"devices\": [\n    {\n      \"id\": \"<integer>\",\n      \"productType\": \"<string>\",\n      \"typeSpecificId\": \"<integer>\",\n      \"deviceLockEnabled\": \"<boolean>\",\n      \"displayedSignalStrength\": \"<string>\",\n      \"batteryLevel\": \"<string>\",\n      \"name\": \"<string>\",\n      \"roomId\": \"<integer>\"\n    },\n    {\n      \"id\": \"<integer>\",\n      \"productType\": \"<string>\",\n      \"typeSpecificId\": \"<integer>\",\n      \"deviceLockEnabled\": \"<boolean>\",\n      \"displayedSignalStrength\": \"<string>\",\n      \"batteryLevel\": \"<string>\",\n      \"name\": \"<string>\",\n      \"roomId\": \"<integer>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Returns an error message.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/devices",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"devices"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "awaymode",
+									"item": [
+										{
+											"name": "Set away mode",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "PATCH",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"awayModeEnabled\": \"<boolean>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn/awaymode",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn",
+														"awaymode"
+													],
+													"variable": [
+														{
+															"key": "urn",
+															"value": "<string>",
+															"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+														}
+													]
+												},
+												"description": "Setting the Away Mode on and off for a specific hub to follow hub specific settings\\r\\nThe Away Mode can be set via the following API request, passing a true or false.\\r\\ntrue = AwayMode turns on,\\r\\nfalse = AwayMode turns off"
+											},
+											"response": [
+												{
+													"name": "Returns empty if the away mode is successfully updated.",
+													"originalRequest": {
+														"method": "PATCH",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"awayModeEnabled\": \"<boolean>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/awaymode",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"awaymode"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												},
+												{
+													"name": "Returns an error message.",
+													"originalRequest": {
+														"method": "PATCH",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"awayModeEnabled\": \"<boolean>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/awaymode",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"awaymode"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										},
+										{
+											"name": "Fetch away mode status",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn/awaymode",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn",
+														"awaymode"
+													],
+													"variable": [
+														{
+															"key": "urn",
+															"value": "<string>",
+															"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+														}
+													]
+												},
+												"description": "Getting whether the Away Mode is on and off for a specific hub to follow.\\r\\nThe Away Mode can be found via the following API request, returning true or false.\\r\\ntrue = AwayMode is on,\\r\\nfalse = AwayMode is off"
+											},
+											"response": [
+												{
+													"name": "Success",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/awaymode",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"awaymode"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"awayModeEnabled\": \"<boolean>\"\n}"
+												},
+												{
+													"name": "Unauthorized",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/awaymode",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"awaymode"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "smartplugs",
+									"item": [
+										{
+											"name": "{deviceId}",
+											"item": [
+												{
+													"name": "Fetch smart plug detail",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"smartplugs",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) The device identifier."
+																}
+															]
+														},
+														"description": "Get information about a specific smart plug."
+													},
+													"response": [
+														{
+															"name": "Returns a specific Smart Plug.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"smartplugs",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<integer>\",\n  \"productType\": \"<string>\",\n  \"typeSpecificId\": \"<integer>\",\n  \"deviceLockEnabled\": \"<boolean>\",\n  \"displayedSignalStrength\": \"<string>\",\n  \"batteryLevel\": \"<string>\",\n  \"name\": \"<string>\",\n  \"roomId\": \"<integer>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"smartplugs",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"smartplugs",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Turn smart plug ON/OFF",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PATCH",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"onOff\": \"<string>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"smartplugs",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) The device identifier."
+																}
+															]
+														},
+														"description": "Turn a specific smart plug on or off."
+													},
+													"response": [
+														{
+															"name": "Empty if the smart plug is updated.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"onOff\": \"<string>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"smartplugs",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"body": ""
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"onOff\": \"<string>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"smartplugs",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"onOff\": \"<string>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"smartplugs",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "List all smart plugs",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn",
+														"smartplugs"
+													],
+													"variable": [
+														{
+															"key": "urn",
+															"value": "<string>",
+															"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+														}
+													]
+												},
+												"description": "Get a list of all smart plugs."
+											},
+											"response": [
+												{
+													"name": "Returns a list of all Smart Plugs.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"smartplugs"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"smartPlugs\": [\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"manualState\": \"<string>\"\n    },\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"manualState\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Returns an error message.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/smartplugs",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"smartplugs"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "lights",
+									"item": [
+										{
+											"name": "{deviceId}",
+											"item": [
+												{
+													"name": "Fetch Light Info",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"lights",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) Device ID"
+																}
+															]
+														},
+														"description": "Get information about a specific light."
+													},
+													"response": [
+														{
+															"name": "Returns information about a specific light.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"lights",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"currentState\": \"<string>\",\n  \"targetState\": \"<string>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"lights",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"lights",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Set Light Dimness",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PATCH",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"onOff\": \"<string>\",\n  \"percentage\": \"<integer>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"lights",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) Device ID"
+																}
+															]
+														},
+														"description": "Turn a specific Light on or off and sets it`s dimming level."
+													},
+													"response": [
+														{
+															"name": "Returns empty is the light update is successful.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"onOff\": \"<string>\",\n  \"percentage\": \"<integer>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"lights",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"body": ""
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"onOff\": \"<string>\",\n  \"percentage\": \"<integer>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"lights",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"onOff\": \"<string>\",\n  \"percentage\": \"<integer>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/lights/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"lights",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "List all Lights",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn/lights",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn",
+														"lights"
+													],
+													"variable": [
+														{
+															"key": "urn",
+															"value": "<string>",
+															"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+														}
+													]
+												},
+												"description": "Get a list of all lights in a specific room."
+											},
+											"response": [
+												{
+													"name": "Returns a list of all Lights in a specific Room.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/lights",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"lights"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"lights\": [\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"currentState\": \"<string>\",\n      \"targetState\": \"<string>\"\n    },\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"currentState\": \"<string>\",\n      \"targetState\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Returns an error message.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/lights",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"lights"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "shutters",
+									"item": [
+										{
+											"name": "{deviceId}",
+											"item": [
+												{
+													"name": "Fetch Shutter Detail",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"shutters",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) Device ID"
+																}
+															]
+														},
+														"description": "Get information about a specific shutter."
+													},
+													"response": [
+														{
+															"name": "Returns information about a specific shutter.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"shutters",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"currentLift\": \"<integer>\",\n  \"targetLift\": \"<integer>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"shutters",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"shutters",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Set shutter level",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{bearerToken}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PATCH",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"percentage\": \"<integer>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"shutters",
+																":deviceId"
+															],
+															"variable": [
+																{
+																	"key": "urn",
+																	"value": "<string>",
+																	"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																},
+																{
+																	"key": "deviceId",
+																	"value": "<integer>",
+																	"description": "(Required) Device ID"
+																}
+															]
+														},
+														"description": "Set the level of a specific shutter."
+													},
+													"response": [
+														{
+															"name": "Returns empty.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"percentage\": \"<integer>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"shutters",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"body": ""
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"percentage\": \"<integer>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"shutters",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Unauthorized",
+															"code": 401,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														},
+														{
+															"name": "Returns an error message.",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"percentage\": \"<integer>\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/shutters/:deviceId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		"shutters",
+																		":deviceId"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn"
+																		},
+																		{
+																			"key": "deviceId"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "List Shutters",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{bearerToken}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn/shutters",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn",
+														"shutters"
+													],
+													"variable": [
+														{
+															"key": "urn",
+															"value": "<string>",
+															"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+														}
+													]
+												},
+												"description": "Get a list of all Shutters in a specific room."
+											},
+											"response": [
+												{
+													"name": "Returns a list of all Shutters in a specific room.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/shutters",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"shutters"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"shutters\": [\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"currentLift\": \"<integer>\",\n      \"targetLift\": \"<integer>\"\n    },\n    {\n      \"id\": \"<integer>\",\n      \"name\": \"<string>\",\n      \"currentLift\": \"<integer>\",\n      \"targetLift\": \"<integer>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Returns an error message.",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/shutters",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"shutters"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Unauthorized",
+													"code": 401,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												},
+												{
+													"name": "Not Found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/v1/hubs/:urn/shutters",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"v1",
+																"hubs",
+																":urn",
+																"shutters"
+															],
+															"variable": [
+																{
+																	"key": "urn"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "{productType}",
+									"item": [
+										{
+											"name": "{deviceId}",
+											"item": [
+												{
+													"name": "schedule",
+													"item": [
+														{
+															"name": "Fetch device schedule",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{bearerToken}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/v1/hubs/:urn/:productType/:deviceId/schedule",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"v1",
+																		"hubs",
+																		":urn",
+																		":productType",
+																		":deviceId",
+																		"schedule"
+																	],
+																	"variable": [
+																		{
+																			"key": "urn",
+																			"value": "<string>",
+																			"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+																		},
+																		{
+																			"key": "productType",
+																			"value": "itrvs",
+																			"description": "(Required) Type of the product"
+																		},
+																		{
+																			"key": "deviceId",
+																			"value": "<integer>",
+																			"description": "(Required) Device ID"
+																		}
+																	]
+																},
+																"description": "Get and set the schedule for a specific device. These will differ dependant on the type of device.\r\nSmart Plugs and Smart Sockets have on/off schedules, Lights and Shutters have percentage schedules."
+															},
+															"response": [
+																{
+																	"name": "Returns the device schedule.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/:productType/:deviceId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				":productType",
+																				":deviceId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "productType"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"monday\": [\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"tuesday\": [\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"wednesday\": [\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"thursday\": [\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"friday\": [\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"saturday\": [\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"sunday\": [\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    },\n    {\n      \"sunrise\": \"<boolean>\",\n      \"sunset\": \"<boolean>\",\n      \"time\": \"<integer>\",\n      \"onOff\": \"<string>\"\n    }\n  ],\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+																},
+																{
+																	"name": "Returns an error message.",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/:productType/:deviceId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				":productType",
+																				":deviceId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "productType"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Unauthorized",
+																	"code": 401,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																},
+																{
+																	"name": "Not Found",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "application/json"
+																			},
+																			{
+																				"key": "Authorization",
+																				"value": "Bearer <token>",
+																				"description": "Added as a part of security scheme: bearer"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/v1/hubs/:urn/:productType/:deviceId/schedule",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"v1",
+																				"hubs",
+																				":urn",
+																				":productType",
+																				":deviceId",
+																				"schedule"
+																			],
+																			"variable": [
+																				{
+																					"key": "urn"
+																				},
+																				{
+																					"key": "productType"
+																				},
+																				{
+																					"key": "deviceId"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "json",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "Fetch Hub by URN",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{bearerToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/v1/hubs/:urn",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"hubs",
+												":urn"
+											],
+											"variable": [
+												{
+													"key": "urn",
+													"value": "<string>",
+													"description": "(Required) The URN of the hub in question, as returned by the /v1/hubs endpoint."
+												}
+											]
+										},
+										"description": "Gets a home hub accessible via this account."
+									},
+									"response": [
+										{
+											"name": "Returns a home hub.",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn"
+													],
+													"variable": [
+														{
+															"key": "urn"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": \"<integer>\",\n  \"productType\": \"<string>\",\n  \"typeSpecificId\": \"<integer>\",\n  \"deviceLockEnabled\": \"<boolean>\",\n  \"displayedSignalStrength\": \"<string>\",\n  \"batteryLevel\": \"<string>\",\n  \"name\": \"<string>\",\n  \"roomId\": \"<integer>\",\n  \"dataTimeStamp\": \"<dateTime>\"\n}"
+										},
+										{
+											"name": "Returns an error message.",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/v1/hubs/:urn",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"v1",
+														"hubs",
+														":urn"
+													],
+													"variable": [
+														{
+															"key": "urn"
+														}
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "List Hubs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/hubs",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"hubs"
+									]
+								},
+								"description": "Get a list of all home hubs accessible via this account."
+							},
+							"response": [
+								{
+									"name": "Returns the list of home hubs.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/v1/hubs",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"hubs"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "[\n  {\n    \"urn\": \"<string>\"\n  },\n  {\n    \"urn\": \"<string>\"\n  }\n]"
+								},
+								{
+									"name": "Returns an error message.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/v1/hubs",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"hubs"
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://dev.api.exchange.se.app/wiser-home/essential"
+		}
+	]
+}

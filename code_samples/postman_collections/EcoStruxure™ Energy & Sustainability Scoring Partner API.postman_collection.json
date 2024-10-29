@@ -1,0 +1,1954 @@
+{
+	"info": {
+		"_postman_id": "069d2749-d3d1-4e5e-937b-5ce10b4c0e02",
+		"name": "EcoStruxure™ Energy & Sustainability Scoring Partner API",
+		"description": "# Overview\n\nEcoStruxure™ Energy and Sustainability Scoring Partner API allows Building Performance Score Providers to collect, manage and benchmark buildings measurement data in order to deliver energy and sustainability performance scores to Schneider Electric customers registered with scoring partner application.\n\n## API overview and usage\n\nThis API enables the following features:\n\n\n**Sites Metadata**\n- Retrieve all sites belonging to which the connected user has access, along site metadata needed for performance scores calculation (e.g. gross area, building occupants, operating hours, etc)\n\n\n**Meters and Measurement Types**\n- Retrieve all meters installed at a given site, including the list of measurements and units they support\n\n**Sites Registration**\n- Allow the Scoring Partner, to register a site providing the scores related details and thus starting automatically a data pipeline to collect all timeseries related information\n- Allow Scoring Partner to retrieve the list of projects associated for each site\n\n**Timeseries**\n- Retrieve all timeseries for any given site and for an arbitrary time period\n- Room comfort data: zone temperature, humidity, CO2\n- Waste Management: waste diverted and waste generated\n- Energy consumption: electricity and fuel consumption\n\n**Performance Scores**\n* Provide Performance Scores for a given site and read current and historical scores\n* Supported Types: Daily, Monthly, Average, Local Average \n* Supported Categories: Electricity, Fuel, Water, Waste, Human Experience\n\n## Catalog\n\nMeter Commodity and Meter Usage per commodity catalog.\n\n<details>\n  <summary>Meter Commodity</summary>\n\n| Commodity        | Unit Type Name    | Unit Type Symbol |\n| ---------------- | ----------------- | ---------------- |\n| Electricity      | kilo watt hour    | kWh              |\n| Fuel             | cubic meter       | m³               |\n| Waste            | kilogram          | kg               |\n| Water            | cubic meter       | m³               |\n| Human Experience/Air Quality | parts per million | ppm              |\n</details>\n\n<details>\n  <summary>Commodity Usage Type</summary>\n\n| Commodity        | Usage                                            |\n| ---------------- | ------------------------------------------------ |\n| Electricity      | Purchased from Grid                              |\n| Electricity      | Generated offsite - renewable                    |\n| Electricity      | Generated onsite - solar                         |\n| Fuel             | Diesel                                           |\n| Fuel             | District Hot Water                               |\n| Fuel             | District Chilled Water (Electric Driven Chiller) |\n| Fuel             | Biodiesel (B100)                                 |\n| Fuel             | Liquefied Natural Gas (LPG)                      |\n| Fuel             | Natural Gas                                      |\n| Fuel             | District Steam                                   |\n| Fuel             | Fuel Oil                                         |\n| Waste            | Waste Generated                                  |\n| Waste            | Waste Diverted                                   |\n| Water            | Reclaimed onsite                                 |\n| Water            | Municipality supplied potable water              |\n| Human Experience/Air Quality | CO2                                              |\n| Human Experience/Air Quality | CO2 - Raw                                        |\n</details>\n\n\n## How it works\n\nThis API works for any Schneider Electric customer who has an identity in Schneider Electric system, and site data associated with its identity.\n\nThe following steps will explain how the API works,\n\n**Step 1:** In order to access the customer data, the customer must identify themself and provide their consent to the scoring application.\n\n**Step 2:** Enquire all the sites which the customer is authorized to calculate the performance scores.\n\n**Step 3:** Enquire meters and timeseries measurements for a selected site.\n\n**Step 4:** Calculate the scores based on the building measurement data received from Schneider Electric.\n\n**Step 5:** Update the performance scores calculated for the given site back to Schneider Electric. \n\n\n![How it works](https://raw.githubusercontent.com/ecostruxure-openapi/public-images/main/energy-sustainability-scoring/how-it-works-new.png \"How it works\")\n\n\n# Documentation\n    \n## How to sign up\n    \n**Step 1:** [Register or login](https://exchange.se.com) with an Exchange account.\n\n**Step 2:** Subscribe to the [API product in our Shop](https://exchange.se.com/develop/developer-resources?source=developerResources).\n\n**Step 3:** After subscription, API credentials and usage details for the API are available in developer portal.\n\n## Authentication guide\n\nThis API supports the following authentication mechanism:\n\n**OAuth2 Authorization Code Flow**\n \n  Once subscription to the API is approved on [Exchange](https://exchange.se.com), API Subscription Client ID and Client Secret will be shared with the subscriber\n \n  The Client ID should be sent when calling the Authorize Endpoint to initiate the Authorization and Consent flow.\n  \n  Once user consents to the scopes requested by the client app, an authorization code will be issued which needs to be sent to the Token Endpoint with grant_type as *authorization_code*, along with Client ID and Client Secret in order to retrieve an access_token and a refresh_token. In order to retrieve a new access_token, call the Token endpoint with grant_type as *refresh_token* and pass the refresh_token issued before.\n  \n  Each access_token is valid for 1 hour and has to be provided to every API call as HTTP Request Header `Authorization: Bearer {access_token}` \n\n\n![Authorization Code Flow](https://raw.githubusercontent.com/ecostruxure-openapi/public-images/main/energy-sustainability-scoring/authorization_flow.png \"Authorization Code Flow diagram\")\n\n## Sandbox Testing\n\n**What is Sandbox Test Data?**\n\nSandbox test data refers to simulated data that can be used for testing or validating an API without manipulating real production data. It provides a safe environment for developers to experiment with the API, test different scenarios and identify errors before deploying it to the production server.\n\n**Why is Sandbox Test Data Important?**\n\nWorking with live production data can be risky, especially during development and testing phases where unexpected changes can occur. Sandbox test data allows developers to create an isolated environment where they can test new features, fix bugs, and improve overall performance without causing any harm to the production data. This helps save time, money and minimizes the risk of introducing new issues into the production system.\n\nGet access token for sandbox testing using sandbox authorize endpoint mentioned below  \n\n> Sandbox authorize endpoint: https://api.exchange.se.com/ecostruxure/v1/oauth/sandbox-authorize\n\n## Operations and Resource Model\n\n![Operations and Resource Model diagram](https://raw.githubusercontent.com/ecostruxure-openapi/public-images/main/energy-sustainability-scoring/open-esx-energy-scoring.diagram.png \"Operations and Resource Model diagram\")\n\n## Support\n\nContact our Exchange support team at exchange.support@se.com and include,\n\n    - Endpoint URL\n    - Request/Response of the URL\n    - Any additional information like Screenshots, Postman collections\n\nGet help from the community [here](https://community.se.com/t5/Green-Building-Scoring-and/bd-p/green-building-certification).\n\n---",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34682654"
+	},
+	"item": [
+		{
+			"name": "sites",
+			"item": [
+				{
+					"name": "scoring-providers",
+					"item": [
+						{
+							"name": "List Scoring Application Projects",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "scope",
+											"value": "read:site read:energy-performance write:energy-score read:energy-score offline_access",
+											"type": "string"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+											"type": "string"
+										},
+										{
+											"key": "authUrl",
+											"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/authorize",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "authorization_code",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/sites/scoring-providers?siteId=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sites",
+										"scoring-providers"
+									],
+									"query": [
+										{
+											"key": "siteId",
+											"value": "<string>"
+										}
+									]
+								},
+								"description": "Lists all scoring provider projects for a customer"
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/sites/scoring-providers?siteId=<string>",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												"scoring-providers"
+											],
+											"query": [
+												{
+													"key": "siteId",
+													"value": "<string>"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "[\n  {\n    \"projectId\": \"<long>\",\n    \"projectName\": \"<string>\",\n    \"siteId\": \"<string>\"\n  },\n  {\n    \"projectId\": \"<long>\",\n    \"projectName\": \"<string>\",\n    \"siteId\": \"<string>\"\n  }\n]"
+								},
+								{
+									"name": "Forbidden",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/sites/scoring-providers?siteId=<string>",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												"scoring-providers"
+											],
+											"query": [
+												{
+													"key": "siteId",
+													"value": "<string>"
+												}
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+								},
+								{
+									"name": "Internal Server Error",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/sites/scoring-providers?siteId=<string>",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												"scoring-providers"
+											],
+											"query": [
+												{
+													"key": "siteId",
+													"value": "<string>"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "{site-id}",
+					"item": [
+						{
+							"name": "scoring-providers",
+							"item": [
+								{
+									"name": "Associate Scoring Application Project",
+									"request": {
+										"auth": {
+											"type": "oauth2",
+											"oauth2": [
+												{
+													"key": "scope",
+													"value": "read:site read:energy-performance write:energy-score read:energy-score offline_access",
+													"type": "string"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "accessTokenUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "authUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/authorize",
+													"type": "string"
+												},
+												{
+													"key": "grant_type",
+													"value": "authorization_code",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"leedId\": \"<long>\",\n  \"leedName\": \"<string>\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/sites/:site-id/scoring-providers",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												":site-id",
+												"scoring-providers"
+											],
+											"variable": [
+												{
+													"key": "site-id",
+													"value": "<string>",
+													"description": "(Required) "
+												}
+											]
+										},
+										"description": "Creates a scoring provider resource to associate a site"
+									},
+									"response": [
+										{
+											"name": "Successfully Created",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"leedId\": \"<long>\",\n  \"leedName\": \"<string>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/scoring-providers",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"scoring-providers"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"leedId\": \"<long>\",\n  \"leedName\": \"<string>\"\n}"
+										},
+										{
+											"name": "Bad request",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"leedId\": \"<long>\",\n  \"leedName\": \"<string>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/scoring-providers",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"scoring-providers"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Forbidden",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"leedId\": \"<long>\",\n  \"leedName\": \"<string>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/scoring-providers",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"scoring-providers"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Forbidden",
+											"code": 403,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Internal Server Error",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"leedId\": \"<long>\",\n  \"leedName\": \"<string>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/scoring-providers",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"scoring-providers"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "performance-scores",
+							"item": [
+								{
+									"name": "Fetch Performance Score",
+									"request": {
+										"auth": {
+											"type": "oauth2",
+											"oauth2": [
+												{
+													"key": "scope",
+													"value": "read:site read:energy-performance write:energy-score read:energy-score offline_access",
+													"type": "string"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "accessTokenUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "authUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/authorize",
+													"type": "string"
+												},
+												{
+													"key": "grant_type",
+													"value": "authorization_code",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/sites/:site-id/performance-scores?type=localAverage&type=localAverage&category=waste&category=energy",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												":site-id",
+												"performance-scores"
+											],
+											"query": [
+												{
+													"key": "type",
+													"value": "localAverage"
+												},
+												{
+													"key": "type",
+													"value": "localAverage"
+												},
+												{
+													"key": "category",
+													"value": "waste"
+												},
+												{
+													"key": "category",
+													"value": "energy"
+												}
+											],
+											"variable": [
+												{
+													"key": "site-id",
+													"value": "<string>",
+													"description": "(Required) "
+												}
+											]
+										},
+										"description": "Retrieve all performance scores for a given site"
+									},
+									"response": [
+										{
+											"name": "Found Scores",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores?type=localAverage&category=energy",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"query": [
+														{
+															"key": "type",
+															"value": "localAverage"
+														},
+														{
+															"key": "category",
+															"value": "energy"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "[\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"humanExperience\",\n    \"updatedAt\": \"<dateTime>\"\n  },\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"energy\",\n    \"updatedAt\": \"<dateTime>\"\n  }\n]"
+										},
+										{
+											"name": "Forbidden",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores?type=localAverage&category=energy",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"query": [
+														{
+															"key": "type",
+															"value": "localAverage"
+														},
+														{
+															"key": "category",
+															"value": "energy"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Forbidden",
+											"code": 403,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Not Found",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores?type=localAverage&category=energy",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"query": [
+														{
+															"key": "type",
+															"value": "localAverage"
+														},
+														{
+															"key": "category",
+															"value": "energy"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Internal Server Error",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores?type=localAverage&category=energy",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"query": [
+														{
+															"key": "type",
+															"value": "localAverage"
+														},
+														{
+															"key": "category",
+															"value": "energy"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								},
+								{
+									"name": "Update Performance Score",
+									"request": {
+										"auth": {
+											"type": "oauth2",
+											"oauth2": [
+												{
+													"key": "scope",
+													"value": "read:site read:energy-performance write:energy-score read:energy-score offline_access",
+													"type": "string"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "accessTokenUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "authUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/authorize",
+													"type": "string"
+												},
+												{
+													"key": "grant_type",
+													"value": "authorization_code",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "[\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"humanExperience\",\n    \"updatedAt\": \"<dateTime>\"\n  },\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"energy\",\n    \"updatedAt\": \"<dateTime>\"\n  }\n]",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/sites/:site-id/performance-scores",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												":site-id",
+												"performance-scores"
+											],
+											"variable": [
+												{
+													"key": "site-id",
+													"value": "<string>",
+													"description": "(Required) "
+												}
+											]
+										},
+										"description": "Creates performance scores for a given site. Supports multiple categories (e.g. energy) and types (e.g. monthly)"
+									},
+									"response": [
+										{
+											"name": "Successfully Created",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "[\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"humanExperience\",\n    \"updatedAt\": \"<dateTime>\"\n  },\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"energy\",\n    \"updatedAt\": \"<dateTime>\"\n  }\n]",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "[\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"humanExperience\",\n    \"updatedAt\": \"<dateTime>\"\n  },\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"energy\",\n    \"updatedAt\": \"<dateTime>\"\n  }\n]"
+										},
+										{
+											"name": "Bad request",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "[\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"humanExperience\",\n    \"updatedAt\": \"<dateTime>\"\n  },\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"energy\",\n    \"updatedAt\": \"<dateTime>\"\n  }\n]",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\",\n  \"invalidParams\": [\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    },\n    {\n      \"in\": \"query\",\n      \"name\": \"<string>\",\n      \"reason\": \"<string>\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Forbidden",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "[\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"humanExperience\",\n    \"updatedAt\": \"<dateTime>\"\n  },\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"energy\",\n    \"updatedAt\": \"<dateTime>\"\n  }\n]",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Forbidden",
+											"code": 403,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Internal Server Error",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "[\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"humanExperience\",\n    \"updatedAt\": \"<dateTime>\"\n  },\n  {\n    \"date\": \"<date>\",\n    \"score\": \"<number>\",\n    \"type\": \"daily\",\n    \"category\": \"energy\",\n    \"updatedAt\": \"<dateTime>\"\n  }\n]",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/performance-scores",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"performance-scores"
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "meters",
+							"item": [
+								{
+									"name": "Fetch Meters",
+									"request": {
+										"auth": {
+											"type": "oauth2",
+											"oauth2": [
+												{
+													"key": "scope",
+													"value": "read:site read:energy-performance write:energy-score read:energy-score offline_access",
+													"type": "string"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "accessTokenUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "authUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/authorize",
+													"type": "string"
+												},
+												{
+													"key": "grant_type",
+													"value": "authorization_code",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/sites/:site-id/meters?category=Electricity&category=Gas",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												":site-id",
+												"meters"
+											],
+											"query": [
+												{
+													"key": "category",
+													"value": "Electricity"
+												},
+												{
+													"key": "category",
+													"value": "Gas"
+												}
+											],
+											"variable": [
+												{
+													"key": "site-id",
+													"value": "<string>",
+													"description": "(Required) "
+												}
+											]
+										},
+										"description": "Retrieve all meters installed at a given site"
+									},
+									"response": [
+										{
+											"name": "Found Meters",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/meters?category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"meters"
+													],
+													"query": [
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "[\n  {\n    \"id\": \"<string>\",\n    \"name\": \"<string>\",\n    \"gatewayId\": \"<string>\",\n    \"commodity\": \"<string>\",\n    \"usage\": \"<string>\",\n    \"measurements\": [\n      {\n        \"id\": \"<string>\",\n        \"name\": \"<string>\",\n        \"unit\": \"<string>\",\n        \"timeseries\": {\n          \"key\": \"<string>\"\n        }\n      },\n      {\n        \"id\": \"<string>\",\n        \"name\": \"<string>\",\n        \"unit\": \"<string>\",\n        \"timeseries\": {\n          \"key\": \"<string>\"\n        }\n      }\n    ]\n  },\n  {\n    \"id\": \"<string>\",\n    \"name\": \"<string>\",\n    \"gatewayId\": \"<string>\",\n    \"commodity\": \"<string>\",\n    \"usage\": \"<string>\",\n    \"measurements\": [\n      {\n        \"id\": \"<string>\",\n        \"name\": \"<string>\",\n        \"unit\": \"<string>\",\n        \"timeseries\": {\n          \"key\": \"<string>\"\n        }\n      },\n      {\n        \"id\": \"<string>\",\n        \"name\": \"<string>\",\n        \"unit\": \"<string>\",\n        \"timeseries\": {\n          \"key\": \"<string>\"\n        }\n      }\n    ]\n  }\n]"
+										},
+										{
+											"name": "Forbidden",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/meters?category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"meters"
+													],
+													"query": [
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Forbidden",
+											"code": 403,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Not Found",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/meters?category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"meters"
+													],
+													"query": [
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Internal Server Error",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/meters?category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"meters"
+													],
+													"query": [
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "timeseries",
+							"item": [
+								{
+									"name": "Fetch Timeseries",
+									"request": {
+										"auth": {
+											"type": "oauth2",
+											"oauth2": [
+												{
+													"key": "scope",
+													"value": "read:site read:energy-performance write:energy-score read:energy-score offline_access",
+													"type": "string"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "accessTokenUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/token",
+													"type": "string"
+												},
+												{
+													"key": "authUrl",
+													"value": "https://dev.api.exchange.se.app/ecostruxure/v1/oauth/authorize",
+													"type": "string"
+												},
+												{
+													"key": "grant_type",
+													"value": "authorization_code",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/sites/:site-id/timeseries?updatedAt[gte]=<dateTime>&updatedAt[lt]=<dateTime>&category=Electricity&category=Gas",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"sites",
+												":site-id",
+												"timeseries"
+											],
+											"query": [
+												{
+													"key": "updatedAt[gte]",
+													"value": "<dateTime>"
+												},
+												{
+													"key": "updatedAt[lt]",
+													"value": "<dateTime>"
+												},
+												{
+													"key": "category",
+													"value": "Electricity"
+												},
+												{
+													"key": "category",
+													"value": "Gas"
+												}
+											],
+											"variable": [
+												{
+													"key": "site-id",
+													"value": "<string>",
+													"description": "(Required) "
+												}
+											]
+										},
+										"description": "Get all building measurement data to calculate scores"
+									},
+									"response": [
+										{
+											"name": "Found Timeseries",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/timeseries?updatedAt[gte]=<dateTime>&updatedAt[lt]=<dateTime>&category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"timeseries"
+													],
+													"query": [
+														{
+															"key": "updatedAt[gte]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "updatedAt[lt]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "[\n  {\n    \"key\": \"<string>\",\n    \"values\": [\n      {\n        \"date\": \"<dateTime>\",\n        \"updatedAt\": \"<dateTime>\",\n        \"value\": \"<number>\"\n      },\n      {\n        \"date\": \"<dateTime>\",\n        \"updatedAt\": \"<dateTime>\",\n        \"value\": \"<number>\"\n      }\n    ]\n  },\n  {\n    \"key\": \"<string>\",\n    \"values\": [\n      {\n        \"date\": \"<dateTime>\",\n        \"updatedAt\": \"<dateTime>\",\n        \"value\": \"<number>\"\n      },\n      {\n        \"date\": \"<dateTime>\",\n        \"updatedAt\": \"<dateTime>\",\n        \"value\": \"<number>\"\n      }\n    ]\n  }\n]"
+										},
+										{
+											"name": "Forbidden",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/timeseries?updatedAt[gte]=<dateTime>&updatedAt[lt]=<dateTime>&category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"timeseries"
+													],
+													"query": [
+														{
+															"key": "updatedAt[gte]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "updatedAt[lt]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Forbidden",
+											"code": 403,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Not Found",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/timeseries?updatedAt[gte]=<dateTime>&updatedAt[lt]=<dateTime>&category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"timeseries"
+													],
+													"query": [
+														{
+															"key": "updatedAt[gte]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "updatedAt[lt]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										},
+										{
+											"name": "Internal Server Error",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "<token>",
+														"description": "Added as a part of security scheme: oauth2"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/sites/:site-id/timeseries?updatedAt[gte]=<dateTime>&updatedAt[lt]=<dateTime>&category=Gas",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"sites",
+														":site-id",
+														"timeseries"
+													],
+													"query": [
+														{
+															"key": "updatedAt[gte]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "updatedAt[lt]",
+															"value": "<dateTime>"
+														},
+														{
+															"key": "category",
+															"value": "Gas"
+														}
+													],
+													"variable": [
+														{
+															"key": "site-id"
+														}
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Fetch sites",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/sites?offset=0&limit=50&countryCode=<string>&zipCode=<string>",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"sites"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Offset point of the record to fetch"
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Maximum number of records to fetch from offset value"
+								},
+								{
+									"key": "countryCode",
+									"value": "<string>",
+									"description": "2-Char ISO country code of the site"
+								},
+								{
+									"key": "zipCode",
+									"value": "<string>",
+									"description": "Postal ZIP code of the site"
+								}
+							]
+						},
+						"description": "Retrieve all sites and related metadata"
+					},
+					"response": [
+						{
+							"name": "Found Sites",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/sites?offset=0&limit=50&countryCode=<string>&zipCode=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sites"
+									],
+									"query": [
+										{
+											"key": "offset",
+											"value": "0",
+											"description": "Offset point of the record to fetch"
+										},
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Maximum number of records to fetch from offset value"
+										},
+										{
+											"key": "countryCode",
+											"value": "<string>",
+											"description": "2-Char ISO country code of the site"
+										},
+										{
+											"key": "zipCode",
+											"value": "<string>",
+											"description": "Postal ZIP code of the site"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n  {\n    \"id\": \"<string>\",\n    \"name\": \"<string>\",\n    \"type\": \"<string>\",\n    \"sourceSystemId\": \"<integer>\",\n    \"metadata\": {\n      \"grossArea\": \"<integer>\",\n      \"buildingOccupants\": \"<integer>\",\n      \"daysPerWeekWithVisitors\": \"<integer>\",\n      \"numberOfVisitorsPerDay\": \"<integer>\",\n      \"visitDuration\": \"<double>\",\n      \"weeklyOperatingHours\": \"<integer>\"\n    },\n    \"postalAddress\": {\n      \"address\": \"<string>\",\n      \"city\": \"<string>\",\n      \"countryIsoCode\": \"<string>\",\n      \"zipCode\": \"<string>\",\n      \"stateProvince\": \"<string>\",\n      \"timezone\": \"<string>\",\n      \"coordinates\": {\n        \"latitude\": \"<number>\",\n        \"longitude\": \"<number>\",\n        \"elevation\": \"<number>\"\n      }\n    }\n  },\n  {\n    \"id\": \"<string>\",\n    \"name\": \"<string>\",\n    \"type\": \"<string>\",\n    \"sourceSystemId\": \"<integer>\",\n    \"metadata\": {\n      \"grossArea\": \"<integer>\",\n      \"buildingOccupants\": \"<integer>\",\n      \"daysPerWeekWithVisitors\": \"<integer>\",\n      \"numberOfVisitorsPerDay\": \"<integer>\",\n      \"visitDuration\": \"<double>\",\n      \"weeklyOperatingHours\": \"<integer>\"\n    },\n    \"postalAddress\": {\n      \"address\": \"<string>\",\n      \"city\": \"<string>\",\n      \"countryIsoCode\": \"<string>\",\n      \"zipCode\": \"<string>\",\n      \"stateProvince\": \"<string>\",\n      \"timezone\": \"<string>\",\n      \"coordinates\": {\n        \"latitude\": \"<number>\",\n        \"longitude\": \"<number>\",\n        \"elevation\": \"<number>\"\n      }\n    }\n  }\n]"
+						},
+						{
+							"name": "Forbidden",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/sites?offset=0&limit=50&countryCode=<string>&zipCode=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sites"
+									],
+									"query": [
+										{
+											"key": "offset",
+											"value": "0",
+											"description": "Offset point of the record to fetch"
+										},
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Maximum number of records to fetch from offset value"
+										},
+										{
+											"key": "countryCode",
+											"value": "<string>",
+											"description": "2-Char ISO country code of the site"
+										},
+										{
+											"key": "zipCode",
+											"value": "<string>",
+											"description": "Postal ZIP code of the site"
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						},
+						{
+							"name": "Internal Server Error",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/sites?offset=0&limit=50&countryCode=<string>&zipCode=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sites"
+									],
+									"query": [
+										{
+											"key": "offset",
+											"value": "0",
+											"description": "Offset point of the record to fetch"
+										},
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Maximum number of records to fetch from offset value"
+										},
+										{
+											"key": "countryCode",
+											"value": "<string>",
+											"description": "2-Char ISO country code of the site"
+										},
+										{
+											"key": "zipCode",
+											"value": "<string>",
+											"description": "Postal ZIP code of the site"
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"<uri>\",\n  \"title\": \"<string>\",\n  \"status\": \"<number>\",\n  \"detail\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://dev.api.exchange.se.app/ecostruxure/scoring/v1"
+		}
+	]
+}
