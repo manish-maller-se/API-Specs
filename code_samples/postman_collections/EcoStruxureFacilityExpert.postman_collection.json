@@ -1,0 +1,1401 @@
+{
+	"info": {
+		"_postman_id": "dd1abb04-a064-465a-a97b-159e9913c9a8",
+		"name": "EcoStruxureFacilityExpert",
+		"description": "[<img align=\"right\" src=\"https://raw.githubusercontent.com/SE-Analytics-Team/public-images/master/common%20images/btn_subscribe.png\">](https://exst-ui-uat.schneider-electric.com/api/navigation-service/shop/apps/284321/fesb-api/overview) \n\n## Overview\n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/fe_api/Facility_Expert_Overview.jpg\" style=\"zoom:67%;\" />\n\n\n\n\n\nEcoStruxure™ Facility Expert Data API has been designed to give you access to the key data of your buildings and equipment: \n\n- Energy and comfort data to improve energy performance and sustainability of your entire buildings portfolio and to ensure comfort of occupants\n\n- Key processes and equipment instant data to prevent downtime and to enhance its reliability \n\n\n\n<img align=\"left\" src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/fe_api/Leaf.png\" style=\"zoom:30%; padding-right:15px;\" />\n\n**Ensure business continuity of your key equipment**\n\nIn the event of an equipment fault, you can easily be notified and access to the instant data from your connected equipment for remote analysis\n\n\n <br clear=\"left\"/>\n\n<img align=\"left\" src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/fe_api/Warning.png\" style=\"zoom:30%; \" />\n\n\n**Improve energy efficiency and sustainability of your building portfolio**  \n\nGain visibility on relevant energy data to reduce your consumption and improve your building's performance.\n\n <br clear=\"left\"/>\n\n## API overview and usage\n\nThis document explains the usage of the Facility Expert API. This allows you to get instant data from your equipment / buildings connected to the Facility Expert cloud: \n\n\n\n **Sites information and assets topology:**\n\n- Site information, including devices topology and measurements\n- The assets dataset contains the topology of assets within each site\n\n \n\n**Time series:**\n\n- Room comfort data: zone temperature, humidity, CO2\n- Energy consumption: active energy (kWh), reactive energy (kVar)\n- Electrical parameters: voltage, power demand and frequency\n- LV switchboard / MV switchgear condition data: thermal and hygrometry monitoring \n\n\n\n\n**Alarms/alerts:**\n\n- Room comfort alarms/alerts\n- Load status and alerts: power loss, overload, load stop, trip\n- Phase loss and/or voltage loss alert\n- Cable overheating\n- And many other pre-configured alarms for low voltage/ medium voltage Schneider Electric equipment\n\n\n\nPlease note that you need to be pre-authorized by Schneider-Electric to use this API. This document provides a general tutorial for users who want to consume the Facility Expert API.\n\n\n\n## How it works\n\nThanks to this API, a Schneider Electric customer/partner can remotely access to the near real time energy, equipment and room comfort data collected in the Facility Expert cloud.\n\nPrior to accessing the data, connected architecture compatible with Facility Expert need to be installed and commissioned on site. \n\n \n\n<img src=\"https://raw.githubusercontent.com/sivaramakrishnanonse/public-images/master/fe_api/Howitworks.png\" style=\"zoom:67%;\" />\n\n \n\n \n\nIn a site there could be one or several gateways / controllers and connected architectures, depending of the complexity of the installation.\n\nBefore configuring the Facility Expert API you need to: \n\n1. Order a Facility Expert subscription allowing to access the API\n\n2. Activate the service on top of the connected architectures using Facility Expert app  \n\n3. Then let’s use the following documentation to configure the API. \n\n   \n\n\n# Documentation\n\n## How to sign up\n\nBefore you can sign up for the `Facility Expert` API, you must [register or login with an Exchange account](https://exchange.se.com).\nThen you can subscribe to the [API product in our Shop](https://exchange.se.com) and you can read about Terms & Conditions. After subscription, you will receive further information on how to access the API including the API Key.\n\n## Authentication guide\n\nThis API requires 2 keys to authenticate and allow access to the API.\n1. SE Exchange API Subscription Key: \n\n\tThis key is delivered once the subscription to the API has been approved.\n\tThis key should be included in all API requests in the **Authorization** header that looks like the following:\n\t\n\t| **Authorization:**      _your_subscription_key_\n\n\n2. Facility Expert Technical Token: \n\n\tThis token will be delivered by the Facility Expert technical team once subscription request to the API is accepted.  \n\tThis token grants the partner access to the data of the program requested from the API. \n\t\n\tThere is no link between this technical token and the subscription key. \n\t\n\tThis key should be included in all API requests in the **apiKey** queryParam that looks like the following:\n\t\n\t> **apikey:** <**api_key**>\n\t\n\tYour API keys carry many privileges, so be sure to keep them secure!\n\n## Response Codes\n\nWe follow the error response format proposed in [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) also known as Problem Details for HTTP APIs.  As with our normal API responses, your client must be prepared to gracefully handle additional members of the response.\n\n| HTTP Status Code    |Error Reason |\n|:----------:|--------------|\n| **400**<br/>**Bad Request** |This is the generic error type for not being able to process the request, and will generally contain an explanation in the message.<br/>Other reasons could be: <br /> **Invalid Resource**: The submitted POST body failed our input validation. This error may include an additional “errors” property, with a list of the validation issues. <br /> **Invalid Action**: Returned when you try to access an action on a resource that doesn’t support that action.<br /> **JSON Parse Exception**:  The JSON sent in the request body is not valid JSON.|  \n| **401**<br/>**APIKeyMissing**| Your request did not include an API key.This error suggests that your API key was missing from your request, or that something was formatted or named improperly in your header.<br/>Other reason could be:<br/>**APIKeyInvalid**: Your API key may be invalid, or you've attempted to access the wrong data center. Check that your API key was input correctly, and verify which data center to access.|\n| **403**<br/>**Forbidden**| You are not permitted to access this resource. This is a generic error. <br/>Other reasons could be:<br/>**UserDisabled**: This account has been disabled.<br/>**WrongDatacenter**: The API key provided is linked to a different data center. This error suggests that you tried to contact the wrong data center. It's often associated with misconfigured libraries. |\n|**404**<br/>**ResourceNotFound**|The requested resource could not be found. This error tells you a specific resource doesn't exist. It's possible that the resource has been moved or deleted, or that there's a typo in your request. |\n|**405**<br/>**MethodNotAllowed**|The requested method and resource are not compatible. See the Allow header for this resource's available methods. This error means that the requested resource does not support the HTTP method you used. Find out which methods are allowed for each resource in the API Reference. |\n|**414**<br/>**ResourceNestingTooDeep**|The sub-resource requested is nested too deeply. This uncommon error appears if you've tried to generate a URL with too many resources. |\n|**422**<br/>**InvalidMethodOverride**|This error lets you know you've tried to override an incompatible method. You can only use the X-HTTP-Method-Override header with the POST method.<br/>Other reasons could be:<br/>**RequestedFieldsInvalid**: The fields requested from this resource are invalid.This error suggests there is a typo in your field request or some other type of syntax error or problem that invalidates your request.|\n|**429**<br/>**TooManyRequests**|You have exceeded the limit of 10 simultaneous connections. When you reach the connection limit, we'll throttle the server response. If any of your requests time out after you've reached the limit, those requests could still be considered open and continue to slow your connection. |\n|**500**<br/>**InternalServerError**|An unexpected internal error has occurred. This error lets you know RP-C has experienced a problem. |\n|**503**<br/>**ComplianceRelated**|This method has been disabled. |\n\n## Support\n\nContact the SE Exchange support team at exchange.support@se.com and include:\n\n- Endpoint URL\n- Request/Response\n- Any additional information like Screenshots , Postman collections.\n\n Get help from the community [here](https://community.se.com/t5/EcoStruxure-Energy-Hub-User/bd-p/ecostruxure-energy-hub-user-community).\n\n\n # Authentication\n\nAuthentication is the act of proving an assertion, such as the identify of a computer system user.\n\n| | |\n|-|-|\n| **Security scheme type**   | API Key       |\n| **Header parameter name**  | Authorization |\n\nIn contrast with identification, the act of indicating a person or thing's identity, authentication is the process of verifying that identify.\n\n---\n\n",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34682654"
+	},
+	"item": [
+		{
+			"name": "catalog",
+			"item": [
+				{
+					"name": "datasets",
+					"item": [
+						{
+							"name": "{dataset_id}",
+							"item": [
+								{
+									"name": "records",
+									"item": [
+										{
+											"name": "{record_id}",
+											"item": [
+												{
+													"name": "get Record",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/records/:record_id?select=<string>&pretty=false&timezone=UTC",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"catalog",
+																"datasets",
+																":dataset_id",
+																"records",
+																":record_id"
+															],
+															"query": [
+																{
+																	"key": "select",
+																	"value": "<string>",
+																	"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																},
+																{
+																	"key": "pretty",
+																	"value": "false",
+																	"description": "Activate pretty print"
+																},
+																{
+																	"key": "timezone",
+																	"value": "UTC",
+																	"description": "Set timezone for datetime fields"
+																}
+															],
+															"variable": [
+																{
+																	"key": "dataset_id",
+																	"value": "<string>",
+																	"description": "(Required) Dataset identifier.\n\nCan be found in the \"information\" tab of the dataset page.\n"
+																},
+																{
+																	"key": "record_id",
+																	"value": "<string>",
+																	"description": "(Required) "
+																}
+															]
+														},
+														"description": "Retrieve a single record based on its ID.\n"
+													},
+													"response": [
+														{
+															"name": "A single record",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/records/:record_id?select=<string>&pretty=false&timezone=UTC&Authorization=<API Key>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"catalog",
+																		"datasets",
+																		":dataset_id",
+																		"records",
+																		":record_id"
+																	],
+																	"query": [
+																		{
+																			"key": "select",
+																			"value": "<string>",
+																			"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																		},
+																		{
+																			"key": "pretty",
+																			"value": "false",
+																			"description": "Activate pretty print"
+																		},
+																		{
+																			"key": "timezone",
+																			"value": "UTC",
+																			"description": "Set timezone for datetime fields"
+																		},
+																		{
+																			"key": "Authorization",
+																			"value": "<API Key>",
+																			"description": "Added as a part of security scheme: apikey"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "dataset_id"
+																		},
+																		{
+																			"key": "record_id"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"links\": [\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    },\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    }\n  ],\n  \"record\": {\n    \"id\": \"<string>\",\n    \"timestamp\": \"<string>\",\n    \"size\": \"<integer>\",\n    \"fields\": {}\n  }\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "get Records",
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/records?select=<string>&where=<string>&where=<string>&group_by=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&search=<string>&facet=<string>&facet=<string>&refine=<string>&refine=<string>&exclude=<string>&exclude=<string>&pretty=false&timezone=UTC",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"catalog",
+														"datasets",
+														":dataset_id",
+														"records"
+													],
+													"query": [
+														{
+															"key": "select",
+															"value": "<string>",
+															"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+														},
+														{
+															"key": "where",
+															"value": "<string>",
+															"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+														},
+														{
+															"key": "where",
+															"value": "<string>",
+															"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+														},
+														{
+															"key": "group_by",
+															"value": "<string>",
+															"description": "A group by expression defines a grouping function for an aggregation.\nIt can be:\n - a field name: group result by each value of this field\n - a range function: group result by range\n - a date function: group result by date\nIt is possible to specify a custom name with the 'as name' notation. For instance: group_by='city_field as city'.\n"
+														},
+														{
+															"key": "order_by",
+															"value": "<string>,<string>",
+															"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+														},
+														{
+															"key": "limit",
+															"value": "10",
+															"description": "Number of items to return.\n\nTo use in conjonction with offset to implement pagination.\n\nLimit maximum value is 100. To retrive more data use export entry points.\nThe default value is 10.\n"
+														},
+														{
+															"key": "offset",
+															"value": "0",
+															"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+														},
+														{
+															"key": "search",
+															"value": "<string>",
+															"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+														},
+														{
+															"key": "search",
+															"value": "<string>",
+															"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+														},
+														{
+															"key": "facet",
+															"value": "<string>",
+															"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+														},
+														{
+															"key": "facet",
+															"value": "<string>",
+															"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+														},
+														{
+															"key": "refine",
+															"value": "<string>",
+															"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+														},
+														{
+															"key": "refine",
+															"value": "<string>",
+															"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+														},
+														{
+															"key": "exclude",
+															"value": "<string>",
+															"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+														},
+														{
+															"key": "exclude",
+															"value": "<string>",
+															"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+														},
+														{
+															"key": "pretty",
+															"value": "false",
+															"description": "Activate pretty print"
+														},
+														{
+															"key": "timezone",
+															"value": "UTC",
+															"description": "Set timezone for datetime fields"
+														}
+													],
+													"variable": [
+														{
+															"key": "dataset_id",
+															"value": "<string>",
+															"description": "(Required) Dataset identifier.\n\nCan be found in the \"information\" tab of the dataset page.\n"
+														}
+													]
+												},
+												"description": "Search dataset's records.\n"
+											},
+											"response": [
+												{
+													"name": "Records",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/records?select=<string>&where=<string>&group_by=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&facet=<string>&refine=<string>&exclude=<string>&pretty=false&timezone=UTC&Authorization=<API Key>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"catalog",
+																"datasets",
+																":dataset_id",
+																"records"
+															],
+															"query": [
+																{
+																	"key": "select",
+																	"value": "<string>",
+																	"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																},
+																{
+																	"key": "where",
+																	"value": "<string>",
+																	"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																},
+																{
+																	"key": "group_by",
+																	"value": "<string>",
+																	"description": "A group by expression defines a grouping function for an aggregation.\nIt can be:\n - a field name: group result by each value of this field\n - a range function: group result by range\n - a date function: group result by date\nIt is possible to specify a custom name with the 'as name' notation. For instance: group_by='city_field as city'.\n"
+																},
+																{
+																	"key": "order_by",
+																	"value": "<string>,<string>",
+																	"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+																},
+																{
+																	"key": "limit",
+																	"value": "10",
+																	"description": "Number of items to return.\n\nTo use in conjonction with offset to implement pagination.\n\nLimit maximum value is 100. To retrive more data use export entry points.\nThe default value is 10.\n"
+																},
+																{
+																	"key": "offset",
+																	"value": "0",
+																	"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+																},
+																{
+																	"key": "search",
+																	"value": "<string>",
+																	"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+																},
+																{
+																	"key": "facet",
+																	"value": "<string>",
+																	"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																},
+																{
+																	"key": "refine",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "exclude",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "pretty",
+																	"value": "false",
+																	"description": "Activate pretty print"
+																},
+																{
+																	"key": "timezone",
+																	"value": "UTC",
+																	"description": "Set timezone for datetime fields"
+																},
+																{
+																	"key": "Authorization",
+																	"value": "<API Key>",
+																	"description": "Added as a part of security scheme: apikey"
+																}
+															],
+															"variable": [
+																{
+																	"key": "dataset_id"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"total_count\": \"<integer>\",\n  \"links\": [\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    },\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    }\n  ],\n  \"records\": [\n    {\n      \"links\": [\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        },\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        }\n      ],\n      \"record\": {\n        \"id\": \"<string>\",\n        \"timestamp\": \"<string>\",\n        \"size\": \"<integer>\",\n        \"fields\": {}\n      }\n    },\n    {\n      \"links\": [\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        },\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        }\n      ],\n      \"record\": {\n        \"id\": \"<string>\",\n        \"timestamp\": \"<string>\",\n        \"size\": \"<integer>\",\n        \"fields\": {}\n      }\n    }\n  ]\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "exports",
+									"item": [
+										{
+											"name": "json",
+											"item": [
+												{
+													"name": "export Records JSON",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "application/json"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/exports/json?select=<string>&where=<string>&where=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&search=<string>&facet=<string>&facet=<string>&refine=<string>&refine=<string>&exclude=<string>&exclude=<string>&pretty=false&timezone=UTC",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"catalog",
+																"datasets",
+																":dataset_id",
+																"exports",
+																"json"
+															],
+															"query": [
+																{
+																	"key": "select",
+																	"value": "<string>",
+																	"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																},
+																{
+																	"key": "where",
+																	"value": "<string>",
+																	"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																},
+																{
+																	"key": "where",
+																	"value": "<string>",
+																	"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																},
+																{
+																	"key": "order_by",
+																	"value": "<string>,<string>",
+																	"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+																},
+																{
+																	"key": "limit",
+																	"value": "10",
+																	"description": "Number of items to return in export.\n\nUse -1 to retrieve all records\n"
+																},
+																{
+																	"key": "offset",
+																	"value": "0",
+																	"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+																},
+																{
+																	"key": "search",
+																	"value": "<string>",
+																	"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+																},
+																{
+																	"key": "search",
+																	"value": "<string>",
+																	"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+																},
+																{
+																	"key": "facet",
+																	"value": "<string>",
+																	"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																},
+																{
+																	"key": "facet",
+																	"value": "<string>",
+																	"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																},
+																{
+																	"key": "refine",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "refine",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "exclude",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "exclude",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "pretty",
+																	"value": "false",
+																	"description": "Activate pretty print"
+																},
+																{
+																	"key": "timezone",
+																	"value": "UTC",
+																	"description": "Set timezone for datetime fields"
+																}
+															],
+															"variable": [
+																{
+																	"key": "dataset_id",
+																	"value": "<string>",
+																	"description": "(Required) Dataset identifier.\n\nCan be found in the \"information\" tab of the dataset page.\n"
+																}
+															]
+														},
+														"description": "Export Dataset in JSON format\n"
+													},
+													"response": [
+														{
+															"name": "Return a JSON file",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "application/json"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/exports/json?select=<string>&where=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&facet=<string>&refine=<string>&exclude=<string>&pretty=false&timezone=UTC&Authorization=<API Key>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"catalog",
+																		"datasets",
+																		":dataset_id",
+																		"exports",
+																		"json"
+																	],
+																	"query": [
+																		{
+																			"key": "select",
+																			"value": "<string>",
+																			"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																		},
+																		{
+																			"key": "where",
+																			"value": "<string>",
+																			"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																		},
+																		{
+																			"key": "order_by",
+																			"value": "<string>,<string>",
+																			"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+																		},
+																		{
+																			"key": "limit",
+																			"value": "10",
+																			"description": "Number of items to return in export.\n\nUse -1 to retrieve all records\n"
+																		},
+																		{
+																			"key": "offset",
+																			"value": "0",
+																			"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+																		},
+																		{
+																			"key": "search",
+																			"value": "<string>",
+																			"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+																		},
+																		{
+																			"key": "facet",
+																			"value": "<string>",
+																			"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																		},
+																		{
+																			"key": "refine",
+																			"value": "<string>",
+																			"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																		},
+																		{
+																			"key": "exclude",
+																			"value": "<string>",
+																			"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																		},
+																		{
+																			"key": "pretty",
+																			"value": "false",
+																			"description": "Activate pretty print"
+																		},
+																		{
+																			"key": "timezone",
+																			"value": "UTC",
+																			"description": "Set timezone for datetime fields"
+																		},
+																		{
+																			"key": "Authorization",
+																			"value": "<API Key>",
+																			"description": "Added as a part of security scheme: apikey"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "dataset_id"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "json",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																}
+															],
+															"cookie": [],
+															"body": "<binary>"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "csv",
+											"item": [
+												{
+													"name": "export Records CSV",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "text/csv"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/exports/csv?select=<string>&where=<string>&where=<string>&order_by=<string>,<string>&limit=10&offset=0&facet=<string>&facet=<string>&refine=<string>&refine=<string>&exclude=<string>&exclude=<string>&timezone=UTC&delimiter=;",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"catalog",
+																"datasets",
+																":dataset_id",
+																"exports",
+																"csv"
+															],
+															"query": [
+																{
+																	"key": "select",
+																	"value": "<string>",
+																	"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																},
+																{
+																	"key": "where",
+																	"value": "<string>",
+																	"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																},
+																{
+																	"key": "where",
+																	"value": "<string>",
+																	"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																},
+																{
+																	"key": "order_by",
+																	"value": "<string>,<string>",
+																	"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+																},
+																{
+																	"key": "limit",
+																	"value": "10",
+																	"description": "Number of items to return in export.\n\nUse -1 to retrieve all records\n"
+																},
+																{
+																	"key": "offset",
+																	"value": "0",
+																	"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+																},
+																{
+																	"key": "facet",
+																	"value": "<string>",
+																	"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																},
+																{
+																	"key": "facet",
+																	"value": "<string>",
+																	"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																},
+																{
+																	"key": "refine",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "refine",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "exclude",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "exclude",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "timezone",
+																	"value": "UTC",
+																	"description": "Set timezone for datetime fields"
+																},
+																{
+																	"key": "delimiter",
+																	"value": ";",
+																	"description": "Provide a different delimiter (default ',')."
+																}
+															],
+															"variable": [
+																{
+																	"key": "dataset_id",
+																	"value": "<string>",
+																	"description": "(Required) Dataset identifier.\n\nCan be found in the \"information\" tab of the dataset page.\n"
+																}
+															]
+														},
+														"description": "Export Dataset in CSV format\n"
+													},
+													"response": [
+														{
+															"name": "Return a CSV file",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "text/csv"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/exports/csv?select=<string>&where=<string>&order_by=<string>,<string>&limit=10&offset=0&facet=<string>&refine=<string>&exclude=<string>&timezone=UTC&delimiter=;&Authorization=<API Key>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"catalog",
+																		"datasets",
+																		":dataset_id",
+																		"exports",
+																		"csv"
+																	],
+																	"query": [
+																		{
+																			"key": "select",
+																			"value": "<string>",
+																			"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																		},
+																		{
+																			"key": "where",
+																			"value": "<string>",
+																			"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																		},
+																		{
+																			"key": "order_by",
+																			"value": "<string>,<string>",
+																			"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+																		},
+																		{
+																			"key": "limit",
+																			"value": "10",
+																			"description": "Number of items to return in export.\n\nUse -1 to retrieve all records\n"
+																		},
+																		{
+																			"key": "offset",
+																			"value": "0",
+																			"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+																		},
+																		{
+																			"key": "facet",
+																			"value": "<string>",
+																			"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																		},
+																		{
+																			"key": "refine",
+																			"value": "<string>",
+																			"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																		},
+																		{
+																			"key": "exclude",
+																			"value": "<string>",
+																			"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																		},
+																		{
+																			"key": "timezone",
+																			"value": "UTC",
+																			"description": "Set timezone for datetime fields"
+																		},
+																		{
+																			"key": "delimiter",
+																			"value": ";",
+																			"description": "Provide a different delimiter (default ',')."
+																		},
+																		{
+																			"key": "Authorization",
+																			"value": "<API Key>",
+																			"description": "Added as a part of security scheme: apikey"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "dataset_id"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "text/csv"
+																}
+															],
+															"cookie": [],
+															"body": "<binary>"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "xls",
+											"item": [
+												{
+													"name": "export Records XLS",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "xls"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/exports/xls?select=<string>&where=<string>&where=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&search=<string>&facet=<string>&facet=<string>&refine=<string>&refine=<string>&exclude=<string>&exclude=<string>&timezone=UTC",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"catalog",
+																"datasets",
+																":dataset_id",
+																"exports",
+																"xls"
+															],
+															"query": [
+																{
+																	"key": "select",
+																	"value": "<string>",
+																	"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																},
+																{
+																	"key": "where",
+																	"value": "<string>",
+																	"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																},
+																{
+																	"key": "where",
+																	"value": "<string>",
+																	"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																},
+																{
+																	"key": "order_by",
+																	"value": "<string>,<string>",
+																	"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+																},
+																{
+																	"key": "limit",
+																	"value": "10",
+																	"description": "Number of items to return in export.\n\nUse -1 to retrieve all records\n"
+																},
+																{
+																	"key": "offset",
+																	"value": "0",
+																	"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+																},
+																{
+																	"key": "search",
+																	"value": "<string>",
+																	"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+																},
+																{
+																	"key": "search",
+																	"value": "<string>",
+																	"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+																},
+																{
+																	"key": "facet",
+																	"value": "<string>",
+																	"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																},
+																{
+																	"key": "facet",
+																	"value": "<string>",
+																	"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																},
+																{
+																	"key": "refine",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "refine",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "exclude",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "exclude",
+																	"value": "<string>",
+																	"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																},
+																{
+																	"key": "timezone",
+																	"value": "UTC",
+																	"description": "Set timezone for datetime fields"
+																}
+															],
+															"variable": [
+																{
+																	"key": "dataset_id",
+																	"value": "<string>",
+																	"description": "(Required) Dataset identifier.\n\nCan be found in the \"information\" tab of the dataset page.\n"
+																}
+															]
+														},
+														"description": "Export Dataset in XLS (Excel) format\n"
+													},
+													"response": [
+														{
+															"name": "Return an XLS file",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "xls"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/catalog/datasets/:dataset_id/exports/xls?select=<string>&where=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&facet=<string>&refine=<string>&exclude=<string>&timezone=UTC&Authorization=<API Key>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"catalog",
+																		"datasets",
+																		":dataset_id",
+																		"exports",
+																		"xls"
+																	],
+																	"query": [
+																		{
+																			"key": "select",
+																			"value": "<string>",
+																			"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+																		},
+																		{
+																			"key": "where",
+																			"value": "<string>",
+																			"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+																		},
+																		{
+																			"key": "order_by",
+																			"value": "<string>,<string>",
+																			"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+																		},
+																		{
+																			"key": "limit",
+																			"value": "10",
+																			"description": "Number of items to return in export.\n\nUse -1 to retrieve all records\n"
+																		},
+																		{
+																			"key": "offset",
+																			"value": "0",
+																			"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+																		},
+																		{
+																			"key": "search",
+																			"value": "<string>",
+																			"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+																		},
+																		{
+																			"key": "facet",
+																			"value": "<string>",
+																			"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+																		},
+																		{
+																			"key": "refine",
+																			"value": "<string>",
+																			"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+																		},
+																		{
+																			"key": "exclude",
+																			"value": "<string>",
+																			"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+																		},
+																		{
+																			"key": "timezone",
+																			"value": "UTC",
+																			"description": "Set timezone for datetime fields"
+																		},
+																		{
+																			"key": "Authorization",
+																			"value": "<API Key>",
+																			"description": "Added as a part of security scheme: apikey"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "dataset_id"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "xls"
+																}
+															],
+															"cookie": [],
+															"body": "<binary>"
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "get Dataset",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/catalog/datasets/:dataset_id?select=<string>&pretty=false&timezone=UTC&include_app_metas=false",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"catalog",
+												"datasets",
+												":dataset_id"
+											],
+											"query": [
+												{
+													"key": "select",
+													"value": "<string>",
+													"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+												},
+												{
+													"key": "pretty",
+													"value": "false",
+													"description": "Activate pretty print"
+												},
+												{
+													"key": "timezone",
+													"value": "UTC",
+													"description": "Set timezone for datetime fields"
+												},
+												{
+													"key": "include_app_metas",
+													"value": "false",
+													"description": "Explicitely request application metas for each datasets.\n"
+												}
+											],
+											"variable": [
+												{
+													"key": "dataset_id",
+													"value": "<string>",
+													"description": "(Required) Dataset identifier.\n\nCan be found in the \"information\" tab of the dataset page.\n"
+												}
+											]
+										},
+										"description": "List of available endpoints for the specified dataset, with metadata and endpoints.\n\nWill provide links for:\n* the attachments endpoint\n* the files endpoint\n* the records endpoint\n* the catalog endpoint\n"
+									},
+									"response": [
+										{
+											"name": "The dataset",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/catalog/datasets/:dataset_id?select=<string>&pretty=false&timezone=UTC&include_app_metas=false&Authorization=<API Key>",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"catalog",
+														"datasets",
+														":dataset_id"
+													],
+													"query": [
+														{
+															"key": "select",
+															"value": "<string>",
+															"description": "A select expression can be used to add, remove or change fields to return.\nAn expression can be:\n  - a wildcard ('*'): return all fields\n  - a field name: return only this field\n  - an include/exclude function. Include (resp exclude) all field matching include/exclude expression. This expression can contain wildcard. For example: include(spa*) will return all fields begining with 'spa'\n  - a complex expression: return the result of this expression. A label can be set for this expression, in that case, field will be named with this label. For instance: 'size * 2 as bigger_size' will return a new field named bigger_size and containing the double of size field value.\n"
+														},
+														{
+															"key": "pretty",
+															"value": "false",
+															"description": "Activate pretty print"
+														},
+														{
+															"key": "timezone",
+															"value": "UTC",
+															"description": "Set timezone for datetime fields"
+														},
+														{
+															"key": "include_app_metas",
+															"value": "false",
+															"description": "Explicitely request application metas for each datasets.\n"
+														},
+														{
+															"key": "Authorization",
+															"value": "<API Key>",
+															"description": "Added as a part of security scheme: apikey"
+														}
+													],
+													"variable": [
+														{
+															"key": "dataset_id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"links\": [\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    },\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    }\n  ],\n  \"dataset\": {\n    \"dataset_id\": \"<string>\",\n    \"has_records\": \"<boolean>\",\n    \"data_visible\": \"<boolean>\",\n    \"features\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"metas\": {},\n    \"fields\": [\n      {\n        \"name\": \"<string>\",\n        \"label\": \"<string>\",\n        \"type\": \"<string>\",\n        \"annotations\": {},\n        \"description\": \"<string>\"\n      },\n      {\n        \"name\": \"<string>\",\n        \"label\": \"<string>\",\n        \"type\": \"<string>\",\n        \"annotations\": {},\n        \"description\": \"<string>\"\n      }\n    ]\n  }\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "get Datasets",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/catalog/datasets?where=<string>&where=<string>&group_by=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&search=<string>&facet=<string>&facet=<string>&refine=<string>&refine=<string>&exclude=<string>&exclude=<string>&pretty=false&timezone=UTC&include_app_metas=false",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"catalog",
+										"datasets"
+									],
+									"query": [
+										{
+											"key": "where",
+											"value": "<string>",
+											"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+										},
+										{
+											"key": "where",
+											"value": "<string>",
+											"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+										},
+										{
+											"key": "group_by",
+											"value": "<string>",
+											"description": "A group by expression defines a grouping function for an aggregation.\nIt can be:\n - a field name: group result by each value of this field\n - a range function: group result by range\n - a date function: group result by date\nIt is possible to specify a custom name with the 'as name' notation. For instance: group_by='city_field as city'.\n"
+										},
+										{
+											"key": "order_by",
+											"value": "<string>,<string>",
+											"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Number of items to return.\n\nTo use in conjonction with offset to implement pagination.\n\nLimit maximum value is 100. To retrive more data use export entry points.\nThe default value is 10.\n"
+										},
+										{
+											"key": "offset",
+											"value": "0",
+											"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+										},
+										{
+											"key": "search",
+											"value": "<string>",
+											"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+										},
+										{
+											"key": "search",
+											"value": "<string>",
+											"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+										},
+										{
+											"key": "facet",
+											"value": "<string>",
+											"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+										},
+										{
+											"key": "facet",
+											"value": "<string>",
+											"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+										},
+										{
+											"key": "refine",
+											"value": "<string>",
+											"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+										},
+										{
+											"key": "refine",
+											"value": "<string>",
+											"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+										},
+										{
+											"key": "exclude",
+											"value": "<string>",
+											"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+										},
+										{
+											"key": "exclude",
+											"value": "<string>",
+											"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+										},
+										{
+											"key": "pretty",
+											"value": "false",
+											"description": "Activate pretty print"
+										},
+										{
+											"key": "timezone",
+											"value": "UTC",
+											"description": "Set timezone for datetime fields"
+										},
+										{
+											"key": "include_app_metas",
+											"value": "false",
+											"description": "Explicitely request application metas for each datasets.\n"
+										}
+									]
+								},
+								"description": "List of available datasets, each with their endpoints, paginated."
+							},
+							"response": [
+								{
+									"name": "List of available datasets",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/catalog/datasets?where=<string>&group_by=<string>&order_by=<string>,<string>&limit=10&offset=0&search=<string>&facet=<string>&refine=<string>&exclude=<string>&pretty=false&timezone=UTC&include_app_metas=false&Authorization=<API Key>",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"catalog",
+												"datasets"
+											],
+											"query": [
+												{
+													"key": "where",
+													"value": "<string>",
+													"description": "An array of filters.\n\nA filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) as well as lots of other functions, thus performing more complex and more precise searches.\n\nRead [the query language reference](https://docs.opendatasoft.com/api/explore/v2.html) for more details.\n"
+												},
+												{
+													"key": "group_by",
+													"value": "<string>",
+													"description": "A group by expression defines a grouping function for an aggregation.\nIt can be:\n - a field name: group result by each value of this field\n - a range function: group result by range\n - a date function: group result by date\nIt is possible to specify a custom name with the 'as name' notation. For instance: group_by='city_field as city'.\n"
+												},
+												{
+													"key": "order_by",
+													"value": "<string>,<string>",
+													"description": "A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nSorts results according to the specified fields' values in ascending order by default.\nTo sort results in descending order, use the `desc` keyword.\n\nExample: `sum(age) desc, name asc`\n"
+												},
+												{
+													"key": "limit",
+													"value": "10",
+													"description": "Number of items to return.\n\nTo use in conjonction with offset to implement pagination.\n\nLimit maximum value is 100. To retrive more data use export entry points.\nThe default value is 10.\n"
+												},
+												{
+													"key": "offset",
+													"value": "0",
+													"description": "Index of the first item to return (starting at 0).\n\nTo use in conjonction with limit to implement pagination.\n"
+												},
+												{
+													"key": "search",
+													"value": "<string>",
+													"description": "An array of full text search.\n\nA full text search performs a prefixed text search for each provided terms in all visible fields of a catalog/dataset.\n"
+												},
+												{
+													"key": "facet",
+													"value": "<string>",
+													"description": "A facet is a field used for simple filtering (through the parameters refine and exclude) or exploration (with the endpoint `/facets`).\n\nFacets can be configured in the back-office or with this parameter.\n\nRead [the facets documentation](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n"
+												},
+												{
+													"key": "refine",
+													"value": "<string>",
+													"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will only include the selected facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.*\n\n*refine is not available for monitoring sources*\n"
+												},
+												{
+													"key": "exclude",
+													"value": "<string>",
+													"description": "An array of facet filters. For example **city:Paris** or **modified:2019/12**.\nThe request will exclude the defined facet value.\n\nRead [filtering with facets value](https://help.opendatasoft.com/apis/ods-search-v2/) for more details.\n\n*Not to be confused with a where filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.*\n\n*exclude is not available for monitoring sources*\n"
+												},
+												{
+													"key": "pretty",
+													"value": "false",
+													"description": "Activate pretty print"
+												},
+												{
+													"key": "timezone",
+													"value": "UTC",
+													"description": "Set timezone for datetime fields"
+												},
+												{
+													"key": "include_app_metas",
+													"value": "false",
+													"description": "Explicitely request application metas for each datasets.\n"
+												},
+												{
+													"key": "Authorization",
+													"value": "<API Key>",
+													"description": "Added as a part of security scheme: apikey"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"total_count\": \"<integer>\",\n  \"links\": [\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    },\n    {\n      \"rel\": \"<string>\",\n      \"href\": \"<string>\"\n    }\n  ],\n  \"datasets\": [\n    {\n      \"links\": [\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        },\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        }\n      ],\n      \"dataset\": {\n        \"dataset_id\": \"<string>\",\n        \"has_records\": \"<boolean>\",\n        \"data_visible\": \"<boolean>\",\n        \"features\": [\n          \"<string>\",\n          \"<string>\"\n        ],\n        \"metas\": {},\n        \"fields\": [\n          {\n            \"name\": \"<string>\",\n            \"label\": \"<string>\",\n            \"type\": \"<string>\",\n            \"annotations\": {},\n            \"description\": \"<string>\"\n          },\n          {\n            \"name\": \"<string>\",\n            \"label\": \"<string>\",\n            \"type\": \"<string>\",\n            \"annotations\": {},\n            \"description\": \"<string>\"\n          }\n        ]\n      }\n    },\n    {\n      \"links\": [\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        },\n        {\n          \"rel\": \"<string>\",\n          \"href\": \"<string>\"\n        }\n      ],\n      \"dataset\": {\n        \"dataset_id\": \"<string>\",\n        \"has_records\": \"<boolean>\",\n        \"data_visible\": \"<boolean>\",\n        \"features\": [\n          \"<string>\",\n          \"<string>\"\n        ],\n        \"metas\": {},\n        \"fields\": [\n          {\n            \"name\": \"<string>\",\n            \"label\": \"<string>\",\n            \"type\": \"<string>\",\n            \"annotations\": {},\n            \"description\": \"<string>\"\n          },\n          {\n            \"name\": \"<string>\",\n            \"label\": \"<string>\",\n            \"type\": \"<string>\",\n            \"annotations\": {},\n            \"description\": \"<string>\"\n          }\n        ]\n      }\n    }\n  ]\n}"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "key",
+				"value": "Authorization",
+				"type": "string"
+			},
+			{
+				"key": "value",
+				"value": "{{apiKey}}",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "query",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://dev.api.exchange.se.app/facility-expert"
+		}
+	]
+}
