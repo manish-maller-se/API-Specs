@@ -1,0 +1,31 @@
+name: Update JSON on MD Change
+
+on:
+  push:
+    paths:
+      - 'example.md'  # Specify your Markdown file here
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Update JSON file
+        run: |
+          # Read the content of the Markdown file
+          content=$(cat example.md)
+          
+          # Create or update the JSON file
+          echo "{\"content\": \"$content\"}" > data.json
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data.json
+          git commit -m "Update JSON file from Markdown changes" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
