@@ -14,6 +14,7 @@ jobs:
 
       - name: Update YAML file
         run: |
+          cd scripts
           # Read the content of the Markdown file
           content=$(cat Description.md)
           
