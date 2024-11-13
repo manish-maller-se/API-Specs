@@ -1,9 +1,9 @@
-# Overview
+# Overview Updated
 This platform delivers a consolidated, contextualized, and reliable connection to portfolio-wide building systems for data-driven decision making and customized digital services via its developer-friendly APIs. Internal Demo on 1st Aug.
 
 # Documentation
 
-## Building Data Platform Introduction
+## Building Data Platform Introduction Added
 
 Building Data Platform is an independent data layer, providing centralized API access to application ready BMS and IoT data. 
 
