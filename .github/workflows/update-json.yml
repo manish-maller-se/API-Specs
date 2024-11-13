@@ -3,8 +3,7 @@ name: Update YAML on MD Change
 on:
   push:
     paths:
-        cd scripts
-      - 'Description.md'  # Specify your Markdown file here
+      - 'scripts/Description.md'  # Specify your Markdown file here
 
 jobs:
   update-yaml:
