@@ -23,6 +23,7 @@ jobs:
 
       - name: Commit changes
         run: |
+          cd scripts
           git add original.yaml
           git commit -m "Update YAML description from Markdown changes" || echo "No changes to commit"
           git push
