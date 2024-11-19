@@ -17,15 +17,16 @@ Dependencies:
 import json
 import glob
 import yaml
-
+import os
 INPUT_MD_FILE = glob.glob('*.md')[0]
 INPUT_YAML_FILE = str()
 if len(glob.glob('*.yaml')) != 0:
     INPUT_YAML_FILE+= glob.glob('*.yaml')[0]
 if len(glob.glob('*.json')) != 0:
     INPUT_YAML_FILE+= glob.glob('*.json')[0]
-
-OUTPUT_FILE = f"{INPUT_YAML_FILE[:-5]}.json"
+if os.path.exists(f"updated_{INPUT_YAML_FILE[:-5]}.json"):
+    os.remove(f"updated_{INPUT_YAML_FILE[:-5]}.json")
+OUTPUT_FILE = f"updated_{INPUT_YAML_FILE[:-5]}.json"
 
 with open(INPUT_MD_FILE, 'r', encoding='utf-8-sig') as md_file:
     md_file_data = md_file.read()
@@ -36,8 +37,6 @@ with open(INPUT_YAML_FILE, 'r', encoding='utf-8-sig') as yaml_file:
 for data in yaml_data:
     if data == 'info':
         yaml_data[data].update({'description':md_file_data})
-    with open(INPUT_YAML_FILE, 'w',encoding='utf-8-sig') as yaml_file:
-        yaml.dump(yaml_data , yaml_file, sort_keys=False)
 
 with open(OUTPUT_FILE, 'w',encoding='utf-8-sig') as json_file:
     json.dump(yaml_data, json_file, indent=4)
