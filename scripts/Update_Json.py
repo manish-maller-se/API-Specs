@@ -1,38 +1,17 @@
-import json
-import os
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+"""Helper script to update the OpenAPI spec with the description from the description.md file."""
+import yaml
 
-class MarkdownHandler(FileSystemEventHandler):
-    def on_modified(self, event):
-        if event.src_path.endswith('.md'):
-            self.update_json(event.src_path)
+INPUT_MD_FILE = "Description.md"
+INPUT_YAML_FILE = "original.yaml"
+with open(INPUT_MD_FILE, 'r', encoding='utf-8-sig') as md_file:
+    md_file_data = md_file.read()
+md_data_append = f"""|- {md_file_data}"""
+print(md_data_append)
+with open(INPUT_YAML_FILE, 'r', encoding='utf-8-sig') as yaml_file:
+    yaml_data = yaml.safe_load(yaml_file)
 
-    def update_json(self, md_file):
-        # Read the content of the MD file
-        with open(md_file, 'r') as file:
-            content = file.read()
-
-        # Prepare the data to be written to JSON
-        data = {
-            'filename': os.path.basename(md_file),
-            'content': content
-        }
-
-        # Write to JSON file
-        with open('output.json', 'w') as json_file:
-            json.dump(data, json_file, indent=4)
-
-if __name__ == "__main__":
-    path = '.'  # Directory to watch
-    event_handler = MarkdownHandler()
-    observer = Observer()
-    observer.schedule(event_handler, path, recursive=False)
-    observer.start()
-
-    try:
-        while True:
-            pass  # Keep the script running
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+for data in yaml_data:
+    if data == 'info':
+        yaml_data[data].update({'description':md_data_append})
+    with open(INPUT_YAML_FILE, 'w',encoding='utf-8-sig') as yaml_file:
+        yaml.dump(yaml_data , yaml_file, sort_keys=False)
