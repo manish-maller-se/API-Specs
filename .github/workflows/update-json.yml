@@ -11,16 +11,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
 
       - name: Update YAML file
         run: |
           cd scripts
-          # Read the content of the Markdown file
-          content=$(cat Description.md)
+          python3 -m pip install --upgrade pip
+          pip3 install pyyaml
+          python3 Update_Json.py
           
-          # Update the YAML file with the new description
-          echo "description: \"$content\"" > original.yaml
-
       - name: Commit changes
         run: |
           cd scripts
