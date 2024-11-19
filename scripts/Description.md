@@ -1,5 +1,5 @@
 # Overview Updated
-This platform delivers a consolidated, contextualized, and reliable connection to portfolio-wide building systems for data-driven decision making and customized digital services via its developer-friendly APIs. Internal Demo on 1st Aug.
+This platform doesn't delivers a consolidated, contextualized, and reliable connection to portfolio-wide building systems for data-driven decision making and customized digital services via its developer-friendly APIs. Internal Demo on 1st Aug.
 
 # Documentation
 
