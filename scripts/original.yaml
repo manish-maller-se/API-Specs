@@ -1,50 +1,50 @@
 ﻿openapi: 3.0.1
 info:
   title: Building Data Platform API
-  description: "|- # Overview Updated\nThis platform delivers a consolidated, contextualized,\
-    \ and reliable connection to portfolio-wide building systems for data-driven decision\
-    \ making and customized digital services via its developer-friendly APIs. Internal\
-    \ Demo on 1st Aug.\n\n# Documentation\n\n## Building Data Platform Introduction\
-    \ Added\n\nBuilding Data Platform is an independent data layer, providing centralized\
-    \ API access to application ready BMS and IoT data. \n\nThe data platform interfaces\
-    \ with existing BMS solutions to extract real-time operational data. This integration\
-    \ will encompass HVAC, lighting, security, room control, metering, and other systems.\
-    \ The data platform accommodates an array of IoT devices, including sensors and\
-    \ actuators. These devices generate data related to occupancy, temperature, air\
-    \ quality, and more. By integrating IoT data, the layer enhances real-time monitoring\
-    \ and analysis capabilities, enabling proactive decision-making for building management.\
-    \ The data platform is built in a scalable and system-agnostic manner where additional\
-    \ device types can be flexibly configured within the data model.\n\nThe data platform\
-    \ offers robust IT interoperability, supporting industry-standard cloud communication\
-    \ protocols such as MQTT, HTTPS, Web Socket, Web Hook RESTful APIs. The data platform\
-    \ is supplemented with native integrations to Schneider Electric's edge servers\
-    \ via MQTT. The SpaceLogic AS-P and Enterprise Server supports standard protocols\
-    \ including BACnet, LonWorks, Modbus, Web Services, and MQTT.\n\nBuilding Data\
-    \ Platform contextualizes incoming source data with Brick semantic tags for devices\
-    \ and locations. Devices can represent physical equipment and sensors or represent\
-    \ virtualized systems such as a room scene control. By leveraging Brick schema,\
-    \ the data platform makes all the information collected on the sites available\
-    \ in a standard format, ensuring application-ready consumption and interoperability\
-    \ between disparate equipment and systems.\n\nBuilding Data Platform's Access\
-    \ & Control API is a REST API which provide consumers with pro-grammatic access\
-    \ to building data. The API enables reading of data values and actuation of commands\
-    \ when applicable systems contain writable properties. The Building Access & Control\
-    \ API also provides access to historical data values. This API facilitates integration\
-    \ with third-party applications, custom dashboards, and analytics platforms. By\
-    \ offering standardized endpoints, the layer promotes data-driven decision-making\
-    \ across a variety of use cases.\n\nBuilding Data Platform's Data Streaming API\
-    \ is implemented on Azure Event Hub providing access to real-time data streams.\
-    \ The data layer will ingest, process, and distribute real-time data, enabling\
-    \ immediate insights and proactive responses to critical events. The streaming\
-    \ interface is also equipped with change notifications. Consumers can register\
-    \ for change notifications on the event hub stream which will result in notifications\
-    \ at change of value (CoV) events.\n\n## Authentication\n\nOnce you have your\
-    \ portal access you can obtain an API Token using the OAuth 2.0 Client Credentials\
-    \ workflow with your consumer credential information. For more information on\
-    \ getting access to the portal and consumer credentials please refer to our document\
-    \ _Portal User Guide \u2013 Partner Viewer User_\n\nYour token endpoint is found\
-    \ at the following address where the {tenantId} is unique to the tenant you use\
-    \ in the Building Data Platform: `https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token`\n\
+  description: "# Overview Updated\nUpdated This platform delivers a consolidated,\
+    \ contextualized, and reliable connection to portfolio-wide building systems for\
+    \ data-driven decision making and customized digital services via its developer-friendly\
+    \ APIs. Internal Demo on 1st Aug.\n\n# Documentation\n\n## Building Data Platform\
+    \ Introduction Added\n\nBuilding Data Platform is an independent data layer, providing\
+    \ centralized API access to application ready BMS and IoT data. \n\nThe data platform\
+    \ interfaces with existing BMS solutions to extract real-time operational data.\
+    \ This integration will encompass HVAC, lighting, security, room control, metering,\
+    \ and other systems. The data platform accommodates an array of IoT devices, including\
+    \ sensors and actuators. These devices generate data related to occupancy, temperature,\
+    \ air quality, and more. By integrating IoT data, the layer enhances real-time\
+    \ monitoring and analysis capabilities, enabling proactive decision-making for\
+    \ building management. The data platform is built in a scalable and system-agnostic\
+    \ manner where additional device types can be flexibly configured within the data\
+    \ model.\n\nThe data platform offers robust IT interoperability, supporting industry-standard\
+    \ cloud communication protocols such as MQTT, HTTPS, Web Socket, Web Hook RESTful\
+    \ APIs. The data platform is supplemented with native integrations to Schneider\
+    \ Electric's edge servers via MQTT. The SpaceLogic AS-P and Enterprise Server\
+    \ supports standard protocols including BACnet, LonWorks, Modbus, Web Services,\
+    \ and MQTT.\n\nBuilding Data Platform contextualizes incoming source data with\
+    \ Brick semantic tags for devices and locations. Devices can represent physical\
+    \ equipment and sensors or represent virtualized systems such as a room scene\
+    \ control. By leveraging Brick schema, the data platform makes all the information\
+    \ collected on the sites available in a standard format, ensuring application-ready\
+    \ consumption and interoperability between disparate equipment and systems.\n\n\
+    Building Data Platform's Access & Control API is a REST API which provide consumers\
+    \ with pro-grammatic access to building data. The API enables reading of data\
+    \ values and actuation of commands when applicable systems contain writable properties.\
+    \ The Building Access & Control API also provides access to historical data values.\
+    \ This API facilitates integration with third-party applications, custom dashboards,\
+    \ and analytics platforms. By offering standardized endpoints, the layer promotes\
+    \ data-driven decision-making across a variety of use cases.\n\nBuilding Data\
+    \ Platform's Data Streaming API is implemented on Azure Event Hub providing access\
+    \ to real-time data streams. The data layer will ingest, process, and distribute\
+    \ real-time data, enabling immediate insights and proactive responses to critical\
+    \ events. The streaming interface is also equipped with change notifications.\
+    \ Consumers can register for change notifications on the event hub stream which\
+    \ will result in notifications at change of value (CoV) events.\n\n## Authentication\n\
+    \nOnce you have your portal access you can obtain an API Token using the OAuth\
+    \ 2.0 Client Credentials workflow with your consumer credential information. For\
+    \ more information on getting access to the portal and consumer credentials please\
+    \ refer to our document _Portal User Guide \u2013 Partner Viewer User_\n\nYour\
+    \ token endpoint is found at the following address where the {tenantId} is unique\
+    \ to the tenant you use in the Building Data Platform: `https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token`\n\
     \nBuilding Data Platform is backed by Microsoft Entra ID. Token generation follows\
     \ standard application development practices. \nSee [Microsoft identity platform\
     \ and the OAuth 2.0 client credentials flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-client-creds-grant-flow#get-a-token)\
