@@ -28,6 +28,6 @@ jobs:
           cd scripts
           git config --global user.email "SESA768583@se.com"
           git config --global user.name "manish-maller-se"
-          git add original.yaml
+          git add .
           git commit -m "Update YAML description from Markdown changes" || echo "No changes to commit"
           git push
