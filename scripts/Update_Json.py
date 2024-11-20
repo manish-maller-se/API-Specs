@@ -14,16 +14,18 @@ Dependencies:
     yaml: PyYAML library for parsing and writing YAML files.
 """
 
+import os
 import json
 import glob
 import yaml
-import os
 INPUT_MD_FILE = glob.glob('*.md')[0]
 INPUT_YAML_FILE = str()
 if len(glob.glob('*.yaml')) != 0:
     INPUT_YAML_FILE+= glob.glob('*.yaml')[0]
 if len(glob.glob('*.json')) != 0:
-    INPUT_YAML_FILE+= glob.glob('*.json')[0]
+    for file in glob.glob('*.json'):
+        if not file.startswith('updated'):
+            INPUT_YAML_FILE+= glob.glob('*.json')[0]
 if os.path.exists(f"updated_{INPUT_YAML_FILE[:-5]}.json"):
     os.remove(f"updated_{INPUT_YAML_FILE[:-5]}.json")
 OUTPUT_FILE = f"updated_{INPUT_YAML_FILE[:-5]}.json"
